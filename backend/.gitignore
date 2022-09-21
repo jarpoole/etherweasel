@@ -1,0 +1,12 @@
+# Ignore python binaries
+**/*.pyc
+
+# Ignore C binaries
+**/*.so
+**/*.o
+
+# Ignore temp files 
+**/*.tmp
+
+# Ignore test results
+**/results.json

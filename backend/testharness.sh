@@ -2,7 +2,7 @@
 
 # Determine the type of test harness to run
 if [[ -z "$1" ]]; then
-    echo "Type of HTTP test not specified"
+    echo "Type of test not specified"
     exit 1
 fi
 TESTMODE=$1
@@ -14,15 +14,15 @@ CPU_LIMIT=1
 MEMORY_LIMIT=1g
 while [[ -n $1 ]]; do
     case $1 in 
-        --cpus=* ) TEMP=$1 CPU_LIMIT="${TEMP#*=}";
+        --cpus=* ) CPU_LIMIT="${1#*=}"; 
         ;;
-        --memory=* ) TEMP=$1 MEMORY_LIMIT="${TEMP#*=}";
+        --memory=* ) MEMORY_LIMIT="${1#*=}";
         ;;
         --active ) MODE=active;
         ;;
         --passive ) MODE=passive;
         ;;
-        --layer=* ) TEMP=$1 LAYER="${TEMP#*=}";
+        --layer=* ) LAYER="${1#*=}";
         ;;
         * ) echo Invalid flag; exit 1;
         ;;
