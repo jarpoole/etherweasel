@@ -1,0 +1,12 @@
+# Cargo build output
+debug/
+target/
+
+# Cargo lock file is not required for executable builds
+Cargo.lock
+
+# rustfmt backup files
+**/*.rs.bk
+
+# MSVC Windows builds from rustc which store debugging information
+*.pdb
