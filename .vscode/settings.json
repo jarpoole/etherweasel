@@ -2,5 +2,17 @@
   "editor.tabSize": 4, // Use 4 spaces per tab
   "editor.insertSpaces": true, // Insert spaces when tab key is pressed
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode"
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "files.exclude": {
+    "backend/etherweasel_container/etherweasel/target/**": true,
+    "backend/etherweasel_container/etherweasel/Cargo.lock": true
+  },
+  "rust-analyzer.linkedProjects": [
+    "backend/etherweasel_container/etherweasel/Cargo.toml"
+  ],
+  "rust-analyzer.checkOnSave.enable": true,
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer",
+    "editor.inlayHints.enabled": "on"
+  }
 }
