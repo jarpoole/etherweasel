@@ -11,7 +11,6 @@ COPY ./websites/nginx.conf /etc/nginx/nginx.conf
 COPY ./websites/payload.tar .
 
 # Configure camera
-COPY ./videos/rtsp-simple-server ./rtsp-simple-server
 COPY ./videos/rtsp-simple-server.yml ./rtsp-simple-server.yml
 COPY ./videos/* ./
 

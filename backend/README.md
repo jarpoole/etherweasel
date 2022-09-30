@@ -1,6 +1,11 @@
+# Dependencies
+
+xhost: `apt install x11-xserver-utils`
 
 # Architecture
+
 The overall architecture of the test suite is given in the block diagram below.
+
 - Networking is in yellow
 - Applications are in red
 - Docker is in blue
@@ -12,6 +17,7 @@ The overall architecture of the test suite is given in the block diagram below.
 ## 1. Launch Terminals
 
 Three interactive shells are required for a full demonstration.
+
 - Leftmost shell will be for a `gui_instance` container
 - Middle shell will be for a `lens_instance` container
 - Rightmost shell will be for `server_instance` container
@@ -37,11 +43,13 @@ Confirm that all three containers listed below are running.
 The middle shell should already be attached to a `lens_instance` container.
 
 In the leftmost shell, attach to `gui_instance`.
+
 ```bash
 sudo docker container attach gui_instance
 ```
 
 In the rightmost shell, attach to `server_instance`.
+
 ```bash
 sudo docker container attach server_instance
 ```
@@ -49,11 +57,13 @@ sudo docker container attach server_instance
 ## 5. Load the Website
 
 Within the leftmost shell inside the container, load a website from the server.
+
 ```bash
 firefox -private 192.168.0.2
 ```
 
 Observe that modification should have occured. To confirm, place the driver back into passive mode to confirm. Within the middle shell inside the container run:
+
 ```bash
 driver passive
 ```
@@ -124,6 +134,7 @@ sudo docker exec -it server_instance bash
 ## Wireshare
 
 Install wireshark
+
 ```bash
 sudo apt update
 sudo apt install wireshark
@@ -131,13 +142,11 @@ sudo apt install wireshark
 
 Note that wireshark required root permissions to capture packets in its default configuration and so should be run with `sudo wireshark` from a new shell.
 
-If there are both public and private ip addresses in the capture, then consider only ones in the ranges of private IPs.
-    1) 10.0.0.0 to 10.255.255.255
-    2) 172.16.0.0 to 172.31.255.255
-    3) 192.168.0.0 to 192.168.255.255
+If there are both public and private ip addresses in the capture, then consider only ones in the ranges of private IPs. 1) 10.0.0.0 to 10.255.255.255 2) 172.16.0.0 to 172.31.255.255 3) 192.168.0.0 to 192.168.255.255
 
 ## Other
-```    
+
+```
 sudo apt-get install python3-matplotlib
 ```
 
