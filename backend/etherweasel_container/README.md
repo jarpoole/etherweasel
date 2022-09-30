@@ -30,6 +30,14 @@ cargo add my_dep
 
 ## Useful information
 
+## Remote
+
+1. Install the `Remote - SSH` extension on your local dev machine (` ms-vscode-remote.remote-ssh`)
+2. Install vscode on the remote server with snap `snap install --classic code`
+3. Install openSSH and configure a static IP address on the server
+4. On the far left in local vscode, select `Remote explorer` and add a new `SSH Target`
+5. Connect to the new SSH target by clicking the `Connect to host in new window button` and wait for vscode to configure everything
+
 https://stackoverflow.com/questions/14774668/what-is-raw-socket-in-socket-programming
 
 socket(AF_INET,RAW_SOCKET,...) means L3 socket , Network Layer Protocol = IPv4

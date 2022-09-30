@@ -8,10 +8,10 @@ edition = "2021"
 [dependencies]
 af_packet = "0.3.1"
 dns-parser = "0.8.0"
+pktparse = "0.7.1"
+nom = "7.1.1"
 # Extras
 socket2 = "0.4.7"
 tokio = { version = "1", features = ["full"] }
 bytes = "1"
-pktparse = "0.7.1"
-nom = "7.1.1"
 

@@ -5,12 +5,11 @@
 //extern crate pktparse;
 
 use af_packet::rx;
-use std::env;
-use std::thread;
-
+//use std::env;
 use dns_parser::Packet;
 use nom::IResult;
-use pktparse::{ethernet, ipv4, udp};
+use pktparse::{ethernet, ip, ipv4, udp};
+use std::thread;
 
 pub fn start(interface_name: &str) {
     //let args: Vec<String> = env::args().collect();
@@ -26,21 +25,21 @@ pub fn start(interface_name: &str) {
     for _ in 0..2 {
         let ring_settings = settings.clone();
         let mut ring = rx::Ring::new(ring_settings).unwrap();
-        fds.push(ring.fd);
+        fds.push(ring.socket.fd);
         thread::spawn(move || {
             loop {
                 let mut block = ring.get_block();
                 for packet in block.get_raw_packets() {
                     //think ethernet header is 82b offset
-                    if let IResult::Done(remainder, frame) =
+                    if let IResult::Ok((remainder, frame)) =
                         ethernet::parse_ethernet_frame(&packet.data[82..])
                     {
                         if frame.ethertype == ethernet::EtherType::IPv4 {
-                            if let IResult::Done(remainder, v4) =
+                            if let IResult::Ok((remainder, v4)) =
                                 ipv4::parse_ipv4_header(&remainder)
                             {
-                                if v4.protocol == ipv4::IPv4Protocol::UDP {
-                                    if let IResult::Done(remainder, udp) =
+                                if v4.protocol == ip::IPProtocol::UDP {
+                                    if let IResult::Ok((remainder, udp)) =
                                         udp::parse_udp_header(&remainder)
                                     {
                                         if udp.source_port == 53 || udp.dest_port == 53 {

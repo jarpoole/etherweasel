@@ -1,5 +1,5 @@
 {
-  "editor.tabSize": 4, // Use 4 spaces per tab
+  "editor.tabSize": 4, // Use 2 spaces per tab
   "editor.insertSpaces": true, // Insert spaces when tab key is pressed
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
@@ -13,6 +13,6 @@
   "rust-analyzer.checkOnSave.enable": true,
   "[rust]": {
     "editor.defaultFormatter": "rust-lang.rust-analyzer",
-    "editor.inlayHints.enabled": "on"
+    "editor.inlayHints.enabled": "off"
   }
 }
