@@ -20,6 +20,14 @@ cargo build
 cargo run
 ```
 
+## Dependencies
+
+Add a new dependency using cargo
+
+```bash
+cargo add my_dep
+```
+
 ## Useful information
 
 https://stackoverflow.com/questions/14774668/what-is-raw-socket-in-socket-programming

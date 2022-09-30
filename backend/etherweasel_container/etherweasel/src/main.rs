@@ -1,8 +1,7 @@
-//use::socket2
-use socket2::{Domain, Socket, Type};
+mod dns_sniff;
+mod hello;
 
 fn main() {
-    println!("Starting Etherweasel...");
-    // Create a TCP listener bound to two addresses.
-    //let socket = Socket::new(Domain::IPV6, Type::RAW, None)?;
+    hello::hello();
+    dns_sniff::start("eth0");
 }
