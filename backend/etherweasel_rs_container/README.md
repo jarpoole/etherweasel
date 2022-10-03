@@ -20,6 +20,12 @@ cargo build
 cargo run
 ```
 
+To test that the rest API is running, make `GET` request using `curl` on the `/ping` endpoint
+
+```bash
+curl -I localhost:3000/ping
+```
+
 ## Dependencies
 
 Add a new dependency using cargo

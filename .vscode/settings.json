@@ -4,11 +4,11 @@
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "files.exclude": {
-    "backend/etherweasel_container/etherweasel/target/**": true,
-    "backend/etherweasel_container/etherweasel/Cargo.lock": true
+    "backend/etherweasel_rs_container/etherweasel_rs/target/**": true,
+    "backend/etherweasel_rs_container/etherweasel_rs/Cargo.lock": true
   },
   "rust-analyzer.linkedProjects": [
-    "backend/etherweasel_container/etherweasel/Cargo.toml"
+    "backend/etherweasel_rs_container/etherweasel_rs/Cargo.toml"
   ],
   "rust-analyzer.checkOnSave.enable": true,
   "[rust]": {
