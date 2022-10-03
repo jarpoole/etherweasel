@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Required dependencies
+# Required dependencies from apt
 #  - iproute2
 #  - net-tools 
 #  - ethtool

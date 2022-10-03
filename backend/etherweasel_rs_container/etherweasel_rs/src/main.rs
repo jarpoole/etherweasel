@@ -23,9 +23,10 @@ async fn main() {
     // `POST /users` goes to `create_user`
     //.route("/users", post(create_user));
 
-    // run our app with hyper
-    // `axum::Server` is a re-export of `hyper::Server`
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    // Notice we listen on all interfaces here (0.0.0.0) instead
+    // of the standard localhost (127.0.0.1) because we would like
+    // the server to be accessible from outside the docker container
+    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     tracing::debug!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())

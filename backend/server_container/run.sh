@@ -1,28 +1,47 @@
 #!/bin/bash 
 
-#RTSP_SIMPLE_SERVER=v0.17.17
-#wget https://github.com/aler9/rtsp-simple-server/releases/download/"$RTSP_SIMPLE_SERVER"/rtsp-simple-server_"$RTSP_SIMPLE_SERVER"_linux_amd64.tar.gz
-#tar -xzvf rtsp-simple-server_"$RTSP_SIMPLE_SERVER"_linux_amd64.tar.gz
-
 cd $(dirname $0)
 
+INTERACTIVE=false
+LOCK_NAME=lock
+while [[ -n $1 ]]; do
+    case $1 in 
+        -i | --interactive ) INTERACTIVE=true; shift
+        ;;
+        --lock=* ) LOCK_NAME="${1#*=}"; shift
+        ;;
+        * ) break
+        ;;
+    esac
+done
+
+# Stop (if needed)
+if docker ps | grep -q -w server_backend_instance; then
+  docker stop server_backend_instance  
+  docker rm server_backend_instance  
+fi
+
 # Copy dependencies
-cp ../utils/interface2.sh ./interface2.tmp
+cp ../utils/hostB.sh ./hostB.tmp
 
 # Build
-docker image build . -t server
+docker image build . -t server_backend_build
 
 # Cleanup
-rm ./interface2.tmp
+rm ./hostB.tmp
 
 # Run
 docker run \
-    --name server_instance \
+    --name server_backend_instance \
     --interactive \
     --tty \
-    --detach \
+    "$( if [[ "$INTERACTIVE" = true ]]; then echo "--detach=false"; else echo "--detach=true"; fi )" \
     --rm \
     --cap-add=NET_ADMIN \
     --network none \
-    --volume /tmp/lock2:/tmp/lock2 \
-    server "$@"
+    --volume /tmp/"$LOCK_NAME":/tmp/lock \
+    server_backend_build "$@"
+
+if [[ "$INTERACTIVE" = true ]]; then 
+  echo ready > /tmp/"$LOCK_NAME"
+fi

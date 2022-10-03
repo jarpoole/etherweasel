@@ -4,6 +4,7 @@
     "rust-lang.rust-analyzer", // Adds support for rust
     "esbenp.prettier-vscode", // Adds support for formatting common web files (.js, .html, .json)
     "timonwong.shellcheck", // Better support + linting for bash scripting
-    "ms-vscode-remote.remote-ssh" // Remote developement
+    "ms-vscode-remote.remote-ssh", // Remote developement
+    "ms-azuretools.vscode-docker" // GUI for managing docker which is useful over SSH
   ]
 }

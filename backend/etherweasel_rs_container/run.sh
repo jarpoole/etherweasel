@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 # This script launches etherweasel_rs in a docker container in one of two modes
 #  1. Interactive mode
@@ -20,7 +20,7 @@ while [[ -n $1 ]]; do
         ;;
         --memory=* ) MEMORY_LIMIT="${1#*=}"; shift
         ;;
-        --lock_name=* ) LOCK_NAME="${1#*=}"; shift
+        --lock=* ) LOCK_NAME="${1#*=}"; shift
         ;;
         * ) break
         ;;
@@ -28,8 +28,9 @@ while [[ -n $1 ]]; do
 done
 
 # Stop (if needed)
-if [ "$(docker ps | grep -w -q etherweasel_rs_backend_instance )" = true ]; then
+if docker ps | grep -q -w etherweasel_rs_backend_instance; then
   docker stop etherweasel_rs_backend_instance  
+  docker rm etherweasel_rs_backend_instance  
 fi
 
 # Build
@@ -40,14 +41,16 @@ docker container run \
     --name etherweasel_rs_backend_instance \
     --interactive \
     --tty \
-    "$( if [ "$INTERACTIVE" = true ]; then echo "--detach=false"; else echo "--detach=true"; fi )" \
+    "$( if [[ "$INTERACTIVE" = true ]]; then echo "--detach=false"; else echo "--detach=true"; fi )" \
     --rm \
     --cap-add=NET_ADMIN \
     --volume /tmp/"$LOCK_NAME":/tmp/lock \
+    --publish 3000:3000 \
+    --network bridge \
     --cpus="$CPU_LIMIT" \
     --memory="$MEMORY_LIMIT" \
     etherweasel_rs_backend_build "$@"
 
-if [ "$INTERACTIVE" = true ]; then 
+if [[ "$INTERACTIVE" = true ]]; then 
   echo ready > /tmp/"$LOCK_NAME"
 fi
