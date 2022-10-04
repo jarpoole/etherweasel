@@ -12,20 +12,20 @@ ln -sf /proc/"$HOST_A_PID"/ns/net /var/run/netns/"$HOST_A_DOCKER_INSTANCE"
 ln -sf /proc/"$MITM_PID"/ns/net /var/run/netns/"$MITM_DOCKER_INSTANCE"
 ln -sf /proc/"$HOST_B_PID"/ns/net /var/run/netns/"$HOST_B_DOCKER_INSTANCE"
 
-ip link add ethmitm1 type veth peer name ethhosta
-ip link add ethmitm2 type veth peer name ethhostb
+ip link add ethmitmA type veth peer name ethhostA
+ip link add ethmitmB type veth peer name ethhostB
 
-ip link set ethhosta up
-ip link set ethmitm1 up
-ip link set ethmitm2 up
-ip link set ethhostb up
+ip link set ethhostA up
+ip link set ethmitmA up
+ip link set ethmitmB up
+ip link set ethhostB up
 
-ip link set ethhosta netns "$HOST_A_DOCKER_INSTANCE"
-ip link set ethmitm1 netns "$MITM_DOCKER_INSTANCE"
-ip link set ethmitm2 netns "$MITM_DOCKER_INSTANCE"
-ip link set ethhostb netns "$HOST_B_DOCKER_INSTANCE"
+ip link set ethhostA netns "$HOST_A_DOCKER_INSTANCE"
+ip link set ethmitmA netns "$MITM_DOCKER_INSTANCE"
+ip link set ethmitmB netns "$MITM_DOCKER_INSTANCE"
+ip link set ethhostB netns "$HOST_B_DOCKER_INSTANCE"
 
-ip netns exec "$HOST_A_DOCKER_INSTANCE" ip link set ethhosta up
-ip netns exec "$MITM_DOCKER_INSTANCE" ip link set ethmitm1 up
-ip netns exec "$MITM_DOCKER_INSTANCE" ip link set ethmitm2 up
-ip netns exec "$HOST_B_DOCKER_INSTANCE" ip link set ethhostb up
+ip netns exec "$HOST_A_DOCKER_INSTANCE" ip link set ethhostA up
+ip netns exec "$MITM_DOCKER_INSTANCE" ip link set ethmitmA up
+ip netns exec "$MITM_DOCKER_INSTANCE" ip link set ethmitmB up
+ip netns exec "$HOST_B_DOCKER_INSTANCE" ip link set ethhostB up

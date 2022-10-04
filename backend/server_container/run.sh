@@ -3,12 +3,9 @@
 cd $(dirname $0)
 
 INTERACTIVE=false
-LOCK_NAME=lock
 while [[ -n $1 ]]; do
     case $1 in 
         -i | --interactive ) INTERACTIVE=true; shift
-        ;;
-        --lock=* ) LOCK_NAME="${1#*=}"; shift
         ;;
         * ) break
         ;;
@@ -35,11 +32,11 @@ docker run \
     --name server_backend_instance \
     --interactive \
     --tty \
-    "$( if [[ "$INTERACTIVE" = true ]]; then echo "--detach=false"; else echo "--detach=true"; fi )" \
     --rm \
     --cap-add=NET_ADMIN \
     --network none \
-    --volume /tmp/"$LOCK_NAME":/tmp/lock \
+    "$( if [[ "$INTERACTIVE" = true ]]; then echo "--detach=false"; else echo "--detach=true"; fi )" \
+    "$( ../utils/synchronize.sh server_backend_instance mount )" \
     server_backend_build "$@"
 
 if [[ "$INTERACTIVE" = true ]]; then 

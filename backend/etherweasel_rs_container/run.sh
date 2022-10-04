@@ -11,7 +11,6 @@ cd $(dirname $0)
 INTERACTIVE=false
 CPU_LIMIT=2
 MEMORY_LIMIT=1g
-LOCK_NAME=lock
 while [[ -n $1 ]]; do
     case $1 in 
         -i | --interactive ) INTERACTIVE=true; shift
@@ -20,17 +19,20 @@ while [[ -n $1 ]]; do
         ;;
         --memory=* ) MEMORY_LIMIT="${1#*=}"; shift
         ;;
-        --lock=* ) LOCK_NAME="${1#*=}"; shift
-        ;;
         * ) break
         ;;
     esac
 done
 
-# Stop (if needed)
+# Stop if needed
 if docker ps | grep -q -w etherweasel_rs_backend_instance; then
   docker stop etherweasel_rs_backend_instance  
   docker rm etherweasel_rs_backend_instance  
+fi
+
+# Queue the unlock if running interactively
+if [[ "$INTERACTIVE" = true ]]; then 
+  ../utils/synchronize.sh etherweasel_rs_backend_instance notify &
 fi
 
 # Build
@@ -41,16 +43,12 @@ docker container run \
     --name etherweasel_rs_backend_instance \
     --interactive \
     --tty \
-    "$( if [[ "$INTERACTIVE" = true ]]; then echo "--detach=false"; else echo "--detach=true"; fi )" \
     --rm \
     --cap-add=NET_ADMIN \
-    --volume /tmp/"$LOCK_NAME":/tmp/lock \
     --publish 3000:3000 \
     --network bridge \
     --cpus="$CPU_LIMIT" \
     --memory="$MEMORY_LIMIT" \
+    "$( if [[ "$INTERACTIVE" = true ]]; then echo "--detach=false"; else echo "--detach=true"; fi )" \
+    "$( ../utils/synchronize.sh etherweasel_rs_backend_instance mount )" \
     etherweasel_rs_backend_build "$@"
-
-if [[ "$INTERACTIVE" = true ]]; then 
-  echo ready > /tmp/"$LOCK_NAME"
-fi

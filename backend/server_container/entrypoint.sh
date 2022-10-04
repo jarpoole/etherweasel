@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Block until test harness is ready
-cat /tmp/lock
+cat /shared/lock
 
 # Configure networking
 ./configure_networking.sh
@@ -29,9 +29,8 @@ if [[ "$*" == *"nginx"* ]]; then
 fi
 
 if [[ "$*" == *"bind"* ]]; then
-    # Start a web server
-    tar -xzvf payload.tar -C /usr/share/nginx/html/
-    ./docker-entrypoint.sh nginx 
+  tar -xzvf payload.tar -C /usr/share/nginx/html/
+  ./docker-entrypoint.sh nginx 
 fi
 
 bash

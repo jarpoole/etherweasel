@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 # This target is required as a dummy target to allow cargo to cache dependencies
-# during build. See https://stackoverflow.com/a/39662015/3888444   
+# during build. See https://stackoverflow.com/a/39662015/3888444 and
+# https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
 name = "cache"
 path = "cache.rs"
@@ -14,6 +15,10 @@ af_packet = "0.3.1"
 dns-parser = "0.8.0"
 pktparse = "0.7.1"
 nom = "7.1.1"
+spidev = "0.5.1"
+rtnetlink = "0.11.0"
+async-trait = "0.1.57"
+futures = "0.3.24"
 # Tokio
 tokio = { version = "1", features = ["full"] }
 axum = "0.5.16"
@@ -22,4 +27,5 @@ tracing-subscriber = "0.3.15"
 # Extras
 socket2 = "0.4.7"
 bytes = "1"
+num_cpus = "1.13.1"
 

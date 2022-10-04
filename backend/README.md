@@ -151,3 +151,12 @@ sudo apt-get install python3-matplotlib
 ```
 
 https://stackoverflow.com/questions/26999595/what-steps-are-needed-to-stream-rtsp-from-ffmpeg
+
+The docker daemon is only accessible to root users by default. We can fix this with the following commands.
+
+```bash
+sudo groupadd docker
+sudo usermod -aG docker $USER
+```
+
+See https://docs.docker.com/engine/install/linux-postinstall/ for more

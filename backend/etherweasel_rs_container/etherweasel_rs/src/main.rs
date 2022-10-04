@@ -1,5 +1,5 @@
 mod dns_sniff;
-mod hello;
+mod driver;
 
 use axum::{
     http::StatusCode,
@@ -7,12 +7,15 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use driver::{Driver, DriverMode, MockDriver};
 //use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() {
-    hello::hello();
+    hello();
+    let driver = MockDriver {};
+    driver.mode(DriverMode::PASSIVE).await;
     //dns_sniff::start("eth0");
 
     // initialize tracing
@@ -28,10 +31,15 @@ async fn main() {
     // the server to be accessible from outside the docker container
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     tracing::debug!("listening on {}", addr);
+    println!("Started server");
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
         .unwrap();
+}
+
+pub fn hello() {
+    println!("etherweasel_rs started");
 }
 
 // basic handler that responds with a static string
