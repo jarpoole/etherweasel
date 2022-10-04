@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Block until test harness is ready
-cat /tmp/lock2
+cat /shared/lock
 
 # Configure networking
-./interface2.sh
+./configure_networking.sh
 
 if [[ "$*" == *"iperf"* ]]; then
     # Start an iperf server
@@ -22,10 +22,15 @@ if [[ "$*" == *"video"* ]]; then
     ffmpeg -stream_loop -1 -re -i ./long.mp4 -f rtsp -rtsp_transport udp rtsp://localhost:8554/stream &
 fi
 
-if [[ "$*" == *"web"* ]]; then
+if [[ "$*" == *"nginx"* ]]; then
     # Start a web server
     tar -xzvf payload.tar -C /usr/share/nginx/html/
     ./docker-entrypoint.sh nginx 
+fi
+
+if [[ "$*" == *"bind"* ]]; then
+  tar -xzvf payload.tar -C /usr/share/nginx/html/
+  ./docker-entrypoint.sh nginx 
 fi
 
 bash

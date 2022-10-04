@@ -1,31 +1,31 @@
 #!/bin/bash
 
-CLIENT=$1
-LENS=$2
-SERVER=$3
+HOST_A_DOCKER_INSTANCE=$1
+MITM_DOCKER_INSTANCE=$2
+HOST_B_DOCKER_INSTANCE=$3
 
-CLIENTPID=$(docker inspect -f '{{.State.Pid}}' $CLIENT)
-LENSPID=$(docker inspect -f '{{.State.Pid}}' $LENS)
-SERVERPID=$(docker inspect -f '{{.State.Pid}}' $SERVER)
-sudo mkdir -p /var/run/netns/
-sudo ln -sf /proc/$CLIENTPID/ns/net /var/run/netns/$CLIENT
-sudo ln -sf /proc/$LENSPID/ns/net /var/run/netns/$LENS
-sudo ln -sf /proc/$SERVERPID/ns/net /var/run/netns/$SERVER
+HOST_A_PID=$(docker inspect -f '{{.State.Pid}}' "$HOST_A_DOCKER_INSTANCE")
+MITM_PID=$(docker inspect -f '{{.State.Pid}}' "$MITM_DOCKER_INSTANCE")
+HOST_B_PID=$(docker inspect -f '{{.State.Pid}}' "$HOST_B_DOCKER_INSTANCE")
+mkdir -p /var/run/netns/
+ln -sf /proc/"$HOST_A_PID"/ns/net /var/run/netns/"$HOST_A_DOCKER_INSTANCE"
+ln -sf /proc/"$MITM_PID"/ns/net /var/run/netns/"$MITM_DOCKER_INSTANCE"
+ln -sf /proc/"$HOST_B_PID"/ns/net /var/run/netns/"$HOST_B_DOCKER_INSTANCE"
 
-sudo ip link add ethlens1 type veth peer name ethclient
-sudo ip link add ethlens2 type veth peer name ethserver
+ip link add ethmitmA type veth peer name ethhostA
+ip link add ethmitmB type veth peer name ethhostB
 
-ip link set ethclient up
-ip link set ethlens1 up
-ip link set ethlens2 up
-ip link set ethserver up
+ip link set ethhostA up
+ip link set ethmitmA up
+ip link set ethmitmB up
+ip link set ethhostB up
 
-sudo ip link set ethclient netns $CLIENT
-sudo ip link set ethlens1 netns $LENS
-sudo ip link set ethlens2 netns $LENS
-sudo ip link set ethserver netns $SERVER
+ip link set ethhostA netns "$HOST_A_DOCKER_INSTANCE"
+ip link set ethmitmA netns "$MITM_DOCKER_INSTANCE"
+ip link set ethmitmB netns "$MITM_DOCKER_INSTANCE"
+ip link set ethhostB netns "$HOST_B_DOCKER_INSTANCE"
 
-sudo ip netns exec $CLIENT ip link set ethclient up
-sudo ip netns exec $LENS ip link set ethlens1 up
-sudo ip netns exec $LENS ip link set ethlens2 up
-sudo ip netns exec $SERVER ip link set ethserver up
+ip netns exec "$HOST_A_DOCKER_INSTANCE" ip link set ethhostA up
+ip netns exec "$MITM_DOCKER_INSTANCE" ip link set ethmitmA up
+ip netns exec "$MITM_DOCKER_INSTANCE" ip link set ethmitmB up
+ip netns exec "$HOST_B_DOCKER_INSTANCE" ip link set ethhostB up

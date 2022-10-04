@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 
 # Determine the type of test harness to run
 if [[ -z "$1" ]]; then
@@ -31,20 +31,15 @@ while [[ -n $1 ]]; do
 done
 
 # Create global pipes if they don't already exist
-if [[ ! -p /tmp/lock0 ]]; then
-    mkfifo /tmp/lock0
+if [[ ! -p /tmp/hosta_lock ]]; then
+    mkfifo /tmp/hosta_lock
 fi
-if [[ ! -p /tmp/lock1 ]]; then
-    mkfifo /tmp/lock1
+if [[ ! -p /tmp/mitm_lock ]]; then
+    mkfifo /tmp/mitm_lock
 fi
-if [[ ! -p /tmp/lock2 ]]; then
-    mkfifo /tmp/lock2
+if [[ ! -p /tmp/hostb_lock ]]; then
+    mkfifo /tmp/hostb_lock
 fi
-
-# Remove all previous containers
-docker stop $(docker ps -a -q)
-docker rm $(docker ps -a -q)
-
 
 if [[ $TESTMODE = "http" ]]; then
     # Build and run
@@ -91,4 +86,21 @@ elif [[ $TESTMODE = "iperf" ]]; then
     echo ready > /tmp/lock2
     # Wait for results
     docker wait iperf_instance
+
+elif [[ $TESTMODE = "dns" ]]; then
+    # Build and run
+    ./dns_container/run.sh
+    ./etherweasel_rs_container/run.sh
+    ./server_container/run.sh bind
+    # Setup networking
+    ./utils/network.sh \
+        dns_backend_instance \
+        etherweasel_rs_backend_instance \
+        server_backend_instance
+    # Notifies containers that test harness is ready
+    ./utils/synchronize.sh dns_backend_instance notify
+    ./utils/synchronize.sh etherweasel_rs_backend_instance notify
+    ./utils/synchronize.sh server_backend_instance notify
+    # Wait for results
+    docker container attach etherweasel_rs_backend_instance
 fi
