@@ -7,6 +7,14 @@ pub struct MockDriver {
     mode: DriverMode,
 }
 
+impl MockDriver {
+    pub fn new() -> Self {
+        Self {
+            mode: DriverMode::DISCONNECTED,
+        }
+    }
+}
+
 #[async_trait]
 impl Driver for MockDriver {
     async fn set_mode(&self, mode: DriverMode) -> Result<(), ()> {

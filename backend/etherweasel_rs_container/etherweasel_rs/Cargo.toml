@@ -19,6 +19,7 @@ spidev = "0.5.1"
 rtnetlink = "0.11.0"
 async-trait = "0.1.57"
 futures = "0.3.24"
+clap = { version = "4.0", features = ["derive"] }
 # Tokio
 tokio = { version = "1", features = ["full"] }
 axum = "0.5.16"

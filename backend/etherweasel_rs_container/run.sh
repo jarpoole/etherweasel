@@ -19,7 +19,7 @@ while [[ -n $1 ]]; do
         ;;
         --memory=* ) MEMORY_LIMIT="${1#*=}"; shift
         ;;
-        * ) break
+        -- | * ) break
         ;;
     esac
 done

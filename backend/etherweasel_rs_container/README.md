@@ -16,7 +16,15 @@ cargo build
 
 ### Run
 
+Most development should be done within the Docker container so that key dependencies are available.
+
+```bash
+sudo ./run.sh --interactive -- test
 ```
+
+The build can also be run directly on the host machine
+
+```bash
 cargo run
 ```
 

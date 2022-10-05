@@ -7,6 +7,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use clap::Parser;
 use driver::driver::{Driver, DriverMode};
 use driver::hardware_driver::HardwareDriver;
 use driver::mock_driver::MockDriver;
@@ -14,22 +15,31 @@ use driver::mock_driver::MockDriver;
 use std::env;
 use std::net::SocketAddr;
 
+#[derive(Parser)]
+struct Cli {
+    #[arg(short = 'd', long = "driver")]
+    driver: String,
+    #[arg(short = 'm', long = "mode")]
+    mode: String,
+}
+
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() {
-    let args: Vec<String> = env::args().skip(1).collect();
-    let mode = args[0];
-    println!("etherweasel_rs is running in '{}' mode", mode);
+    // Handle CLI arguments
+    let args = Cli::parse();
+    let driver: Box<dyn Driver> = match args.driver.as_str() {
+        "test" => Box::new(MockDriver::new()),
+        "hardware" => Box::new(HardwareDriver {}),
+        &_ => panic!("invalid driver"),
+    };
+    println!(
+        "etherweasel_rs is running in '{}' mode using the '{}' driver",
+        args.mode, args.driver
+    );
 
-    let mock_driver = MockDriver {
-        mode: DriverMode::DISCONNECTED,
-    };
-    let hardware_driver = HardwareDriver {};
-    let driver = if mode == "test" {
-        &mock_driver
-    } else {
-        &hardware_driver
-    };
+    // Configure the driver
     driver.set_mode(DriverMode::PASSIVE).await;
+
     //dns_sniff::start("eth0");
 
     // initialize tracing
@@ -51,8 +61,6 @@ async fn main() {
         .await
         .unwrap();
 }
-
-pub fn hello() {}
 
 // basic handler that responds with a static string
 async fn root() -> &'static str {
