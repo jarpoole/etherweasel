@@ -7,15 +7,29 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use driver::{Driver, DriverMode, MockDriver};
+use driver::driver::{Driver, DriverMode};
+use driver::hardware_driver::HardwareDriver;
+use driver::mock_driver::MockDriver;
 //use serde::{Deserialize, Serialize};
+use std::env;
 use std::net::SocketAddr;
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() {
-    hello();
-    let driver = MockDriver {};
-    driver.mode(DriverMode::PASSIVE).await;
+    let args: Vec<String> = env::args().skip(1).collect();
+    let mode = args[0];
+    println!("etherweasel_rs is running in '{}' mode", mode);
+
+    let mock_driver = MockDriver {
+        mode: DriverMode::DISCONNECTED,
+    };
+    let hardware_driver = HardwareDriver {};
+    let driver = if mode == "test" {
+        &mock_driver
+    } else {
+        &hardware_driver
+    };
+    driver.set_mode(DriverMode::PASSIVE).await;
     //dns_sniff::start("eth0");
 
     // initialize tracing
@@ -38,9 +52,7 @@ async fn main() {
         .unwrap();
 }
 
-pub fn hello() {
-    println!("etherweasel_rs started");
-}
+pub fn hello() {}
 
 // basic handler that responds with a static string
 async fn root() -> &'static str {

@@ -1,23 +1,15 @@
+use super::driver::{Driver, DriverMode};
 use async_trait::async_trait;
 use futures::stream::TryStreamExt;
 use rtnetlink::{new_connection, Error, Handle};
 
-#[derive(Debug, Eq, PartialEq)]
-pub enum DriverMode {
-    ACTIVE,
-    PASSIVE,
+pub struct MockDriver {
+    mode: DriverMode,
 }
-
-#[async_trait]
-pub trait Driver {
-    async fn mode(&self, mode: DriverMode) -> Result<(), Error>;
-}
-
-pub struct MockDriver {}
 
 #[async_trait]
 impl Driver for MockDriver {
-    async fn mode(&self, mode: DriverMode) -> Result<(), Error> {
+    async fn set_mode(&self, mode: DriverMode) -> Result<(), ()> {
         // Setup
         println!("Attempting to set mode to {:?}", mode);
         let (connection, handle, _) = new_connection().unwrap();
@@ -36,14 +28,17 @@ impl Driver for MockDriver {
         } else {
             set_interface_nomaster(&handle, "tapA").await;
             set_interface_nomaster(&handle, "tapB").await;
-            set_interface_master(&handle, "ethmitmA", "brAB").await;
-            set_interface_master(&handle, "ethmitmB", "brAB").await;
+            //set_interface_master(&handle, "ethmitmA", "brAB").await;
+            //set_interface_master(&handle, "ethmitmB", "brAB").await;
         }
         println!("Successfully set mode to {:?}", mode);
 
         // Cleanup
         task.abort();
         Ok(())
+    }
+    async fn get_mode(&self) -> Result<DriverMode, ()> {
+        Ok(DriverMode::DISCONNECTED)
     }
 }
 
