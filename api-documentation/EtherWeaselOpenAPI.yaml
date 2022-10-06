@@ -1,0 +1,200 @@
+openapi: 3.0.0
+info:
+  title: EtherWeasel API
+  description: An API that allows users to interactively montitor and modify packets passing through EtherWeasel.
+  version: 1.0.0
+paths:
+  /attack-device/protocols:
+    get:
+      description: Returns a list of protocols that are either currently supported or will be supported in the future.
+      responses:
+        '200':
+          description: A list of protocols.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/protocol'
+  /attack-device/mode:
+    get:
+      description: Returns the mode that the device is currently configured in (i.e. active or passive).
+      responses:
+        '200':
+          description: Active or passive mode.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/modes'
+    put:
+      description: Flips the device between active and passive mode.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/modes'
+      responses:
+        '200':
+          description: Successfully flipped the device mode. Response body contains the current mode for validation purposes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/modes'
+        '400':
+          description: Request body contained invalid mode. Response body contains the current mode for validation purposes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/modes'
+  /attack-device/dns-modifications:
+    get:
+      description: Returns a list of previously requested DNS modifications
+      responses:
+        '200':
+          description: A list containing all DNS modifications that are pending or already implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dns-modifications'
+  /attack-device/dns-modification:
+    post:
+      description: Requests a new DNS modification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/dns-modification'
+      responses:
+        '200':
+          description: A list containing all DNS modifications that are pending or already implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/dns-modifications'
+  /attack-device/dns-modification/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+    delete:
+      description: Removes a previously requested DNS modification
+      responses:
+        '200':
+          description: DNS modification request deleted. Returns updated list containing all DNS modifications that are pending or already implemented.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: 
+                  $ref: '#/components/schemas/dns-modification'
+        '404':
+          description: DNS modification request not found. Returns updated list containing all DNS modifications that are pending or already implemented.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: 
+                  $ref: '#/components/schemas/dns-modification'
+  /attack-device/performance:
+    get:
+      description: Returns the performance of the device at a particular moment.
+      responses:
+        '200':
+          description: A list containing device's performance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/device-performance'
+  /attack-device/information:
+    get:
+      description: Returns various information that pretains to the attack device
+      responses:
+        '200':
+          description: A list containing device information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/device-information'
+  /host-device/information:
+    get:
+      description: Returns various information that pretains to the target host device
+      responses:
+        '200':
+          description: A list containing host device information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/device-information'
+components:
+  schemas:
+    protocol:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: DNS
+        implemented:
+          type: boolean
+          example: 'True'
+    modes:
+      type: string
+      enum: ["ACTIVE", "PASSIVE"]
+    dns-modification:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        address:
+          type: string
+          description: Address that is to be targeted for DNS spoofing
+          example: 'www.google.com'
+        ip-address:
+          type: string
+          description: IP address that is to be replaced with
+          example: 172.217.22.14
+        pending:
+          type: boolean
+          example: True
+    dns-modifications:
+      type: array
+      items:
+        $ref: '#/components/schemas/dns-modification'
+    device-performance:
+      type: object
+      properties:
+        cpuLoadPercent:
+          type: number
+          minimum: 0
+          maximum: 100
+          example: 45.51
+        memUsagePercent:
+          type: number
+          minimum: 0
+          maximum: 100
+          example: 45.51
+        bpsTransfer:
+          type: number
+          minimum: 0
+          example: 45.51
+        batteryLevel:
+          type: number
+          minimum: 0
+          maximum: 100
+          example: 45.51
+    device-information:
+      type: object
+      properties:
+        ip-address:
+          type: string
+          example: 172.217.22.14
+        mac-address:
+          type: string
+          example: 01-23-45-67-89-AB
