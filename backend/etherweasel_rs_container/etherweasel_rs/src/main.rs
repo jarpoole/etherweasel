@@ -5,7 +5,7 @@ use axum::{
     http::StatusCode,
     response::IntoResponse,
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use clap::Parser;
 use driver::driver::{Driver, DriverMode};
@@ -14,6 +14,10 @@ use driver::mock_driver::MockDriver;
 //use serde::{Deserialize, Serialize};
 use std::env;
 use std::net::SocketAddr;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+
+struct State {}
 
 #[derive(Parser)]
 struct Cli {
@@ -27,8 +31,8 @@ struct Cli {
 async fn main() {
     // Handle CLI arguments
     let args = Cli::parse();
-    let driver: Box<dyn Driver> = match args.driver.as_str() {
-        "test" => Box::new(MockDriver::new()),
+    let driver: Box<dyn Driver + Send + Sync> = match args.driver.as_str() {
+        "mock" => Box::new(MockDriver::new()),
         "hardware" => Box::new(HardwareDriver {}),
         &_ => panic!("invalid driver"),
     };
@@ -46,9 +50,10 @@ async fn main() {
     tracing_subscriber::fmt::init();
 
     // build our application with a route
-    let app = Router::new().route("/ping", get(ping));
-    // `POST /users` goes to `create_user`
-    //.route("/users", post(create_user));
+    let app = Router::new()
+        .route("/ping", get(ping))
+        .route("/mode", post(set_mode))
+        .layer(Extension(Arc::new(Mutex::new(driver))));
 
     // Notice we listen on all interfaces here (0.0.0.0) instead
     // of the standard localhost (127.0.0.1) because we would like
@@ -62,13 +67,19 @@ async fn main() {
         .unwrap();
 }
 
-// basic handler that responds with a static string
-async fn root() -> &'static str {
-    "Hello, World!"
-}
-
 async fn ping() -> impl IntoResponse {
     StatusCode::OK
+}
+
+#[axum::debug_handler]
+async fn set_mode(
+    Extension(driver): Extension<Arc<Mutex<Box<dyn Driver + Send + Sync>>>>,
+) -> impl IntoResponse {
+    let mut d = driver.lock().await;
+    d.get_mode().await;
+    //let mode = "hello world";
+    let mode = {};
+    (StatusCode::CREATED, Json(mode))
 }
 
 /*

@@ -9,6 +9,6 @@ pub enum DriverMode {
 
 #[async_trait]
 pub trait Driver {
-    async fn set_mode(&self, mode: DriverMode) -> Result<(), ()>;
+    async fn set_mode(&self, mode: DriverMode) -> Result<(), Box<dyn std::error::Error>>;
     async fn get_mode(&self) -> Result<DriverMode, ()>;
 }
