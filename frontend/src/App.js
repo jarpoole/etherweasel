@@ -1,24 +1,44 @@
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
 
-function App() {
+import SideBar from "./components/SideBar/SideBar";
+import NavBar from "./components/AppBar";
+import Breadcrumbs from "./components/Breadcrumbs";
+import Box from "@mui/material/Box";
+import { Paper } from "@mui/material";
+
+// Mock Data
+const protocols = [
+  {
+    id: 1,
+    name: "DNS",
+    isImplemented: true,
+  },
+  {
+    id: 2,
+    name: "HTTP",
+    isImplemented: false,
+  },
+  {
+    id: 3,
+    name: "VoIP",
+    isImplemented: false,
+  },
+];
+
+const analytics = ["Host", "MitM Attack Device", "Network Gateway"];
+
+function App(props) {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Box sx={{ display: "flex" }}>
+      <NavBar />
+      <SideBar protocols={protocols} analytics={analytics} />
+      <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
+        <Paper elevation={1} sx={{ flexGrow: 1, p: 1 }}>
+          <Breadcrumbs />
+        </Paper>
+        {props.children}
+      </Box>
+    </Box>
   );
 }
 
