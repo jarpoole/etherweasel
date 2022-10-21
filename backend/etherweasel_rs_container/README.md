@@ -34,6 +34,14 @@ To test that the rest API is running, make `GET` request using `curl` on the `/p
 curl -I localhost:3000/ping
 ```
 
+### Test
+
+Basic API requests can be made using cURL
+
+```bash
+curl localhost:3000/mode -X POST -vv -d '{ "mode": "active" }' --header "Content-Type: application/json"
+```
+
 ## Dependencies
 
 Add a new dependency using cargo

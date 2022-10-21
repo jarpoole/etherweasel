@@ -25,6 +25,7 @@ tokio = { version = "1", features = ["full"] }
 axum = { version = "0.5.16", features = ["macros"] }
 tracing = "0.1.36"
 tracing-subscriber = "0.3.15"
+serde = { version = "1.0.138", features = ["derive"] }
 # Extras
 socket2 = "0.4.7"
 bytes = "1"

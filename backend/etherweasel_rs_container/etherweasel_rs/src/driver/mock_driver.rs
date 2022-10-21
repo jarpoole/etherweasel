@@ -17,9 +17,8 @@ impl MockDriver {
 
 #[async_trait]
 impl Driver for MockDriver {
-    async fn set_mode(&self, mode: DriverMode) -> Result<(), Box<dyn std::error::Error>> {
+    async fn set_mode(&mut self, mode: DriverMode) -> Result<(), Box<dyn std::error::Error>> {
         // Setup
-        println!("Attempting to set mode to {:?}", mode);
         let (connection, handle, _) = new_connection().unwrap();
         let task = tokio::spawn(connection);
 
@@ -33,21 +32,22 @@ impl Driver for MockDriver {
             // Bring both taps up
             set_interface_up(&handle, "tabA").await?;
             set_interface_up(&handle, "tabB").await?;
+            // Update the local state
+            self.mode = DriverMode::ACTIVE;
         } else {
             set_interface_nomaster(&handle, "tapA").await?;
             set_interface_nomaster(&handle, "tapB").await?;
             set_interface_master(&handle, "ethmitmA", "brAB").await?;
             set_interface_master(&handle, "ethmitmB", "brAB").await?;
+            self.mode = DriverMode::PASSIVE;
         }
-        println!("Successfully set mode to {:?}", mode);
 
         // Cleanup
         task.abort();
         Ok(())
     }
     async fn get_mode(&self) -> Result<DriverMode, ()> {
-        println!("Getting mode");
-        Ok(DriverMode::DISCONNECTED)
+        Ok(self.mode)
     }
 }
 

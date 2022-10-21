@@ -8,10 +8,10 @@ use axum::{
     Extension, Json, Router,
 };
 use clap::Parser;
-use driver::driver::{Driver, DriverMode};
+use driver::driver::{DriverGuard, DriverMode};
 use driver::hardware_driver::HardwareDriver;
 use driver::mock_driver::MockDriver;
-//use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::env;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -31,10 +31,14 @@ struct Cli {
 async fn main() {
     // Handle CLI arguments
     let args = Cli::parse();
-    let driver: Box<dyn Driver + Send + Sync> = match args.driver.as_str() {
+    let driver_guard: DriverGuard = Arc::new(Mutex::new(match args.driver.as_str() {
         "mock" => Box::new(MockDriver::new()),
         "hardware" => Box::new(HardwareDriver {}),
         &_ => panic!("invalid driver"),
+    }));
+    let mode = match DriverMode::from(&args.mode) {
+        Ok(mode) => mode,
+        Err(_) => panic!("invalid mode"),
     };
     println!(
         "etherweasel_rs is running in '{}' mode using the '{}' driver",
@@ -42,7 +46,7 @@ async fn main() {
     );
 
     // Configure the driver
-    driver.set_mode(DriverMode::PASSIVE).await;
+    set_mode(driver_guard.clone(), mode).await;
 
     //dns_sniff::start("eth0");
 
@@ -52,8 +56,9 @@ async fn main() {
     // build our application with a route
     let app = Router::new()
         .route("/ping", get(ping))
-        .route("/mode", post(set_mode))
-        .layer(Extension(Arc::new(Mutex::new(driver))));
+        .route("/mode", get(get_mode_handler))
+        .route("/mode", post(set_mode_handler))
+        .layer(Extension(driver_guard));
 
     // Notice we listen on all interfaces here (0.0.0.0) instead
     // of the standard localhost (127.0.0.1) because we would like
@@ -71,44 +76,57 @@ async fn ping() -> impl IntoResponse {
     StatusCode::OK
 }
 
+#[derive(Deserialize, Debug)]
+struct SetMode {
+    mode: String,
+}
+
 #[axum::debug_handler]
-async fn set_mode(
-    Extension(driver): Extension<Arc<Mutex<Box<dyn Driver + Send + Sync>>>>,
+async fn set_mode_handler(
+    Extension(driver): Extension<DriverGuard>,
+    Json(payload): Json<SetMode>,
 ) -> impl IntoResponse {
-    let mut d = driver.lock().await;
-    d.get_mode().await;
-    //let mode = "hello world";
-    let mode = {};
-    (StatusCode::CREATED, Json(mode))
+    match DriverMode::from(&payload.mode) {
+        Ok(mode) => match set_mode(driver, mode).await {
+            Ok(()) => StatusCode::OK,
+            Err(()) => StatusCode::INTERNAL_SERVER_ERROR,
+        },
+        Err(()) => StatusCode::BAD_REQUEST,
+    }
+}
+async fn set_mode(driver_guard: DriverGuard, mode: DriverMode) -> Result<(), ()> {
+    println!("Attempting to set mode to {:?}", mode);
+    let mut driver = driver_guard.lock().await;
+    match driver.set_mode(mode).await {
+        Ok(()) => {
+            println!("Successfully set mode to {:?}", mode);
+            Ok(())
+        }
+        Err(_) => {
+            println!("Failed to set mode to {:?}", mode);
+            Err(())
+        }
+    }
 }
 
-/*
-async fn create_user(
-    // this argument tells axum to parse the request body
-    // as JSON into a `CreateUser` type
-    Json(payload): Json<CreateUser>,
-) -> impl IntoResponse {
-    // insert your application logic here
-    let user = User {
-        id: 1337,
-        username: payload.username,
-    };
-
-    // this will be converted into a JSON response
-    // with a status code of `201 Created`
-    (StatusCode::CREATED, Json(user))
+#[axum::debug_handler]
+async fn get_mode_handler(Extension(driver_guard): Extension<DriverGuard>) -> impl IntoResponse {
+    match get_mode(driver_guard).await {
+        Ok(mode) => (StatusCode::OK, Json(mode)).into_response(),
+        Err(()) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+    }
 }
-
-// the input to our `create_user` handler
-#[derive(Deserialize)]
-struct CreateUser {
-    username: String,
+async fn get_mode(driver_guard: DriverGuard) -> Result<DriverMode, ()> {
+    println!("Attempting to get mode");
+    let driver = driver_guard.lock().await;
+    match driver.get_mode().await {
+        Ok(mode) => {
+            println!("Successfully got mode {:?}", mode);
+            Ok(mode)
+        }
+        Err(_) => {
+            println!("Failed to get mode");
+            Err(())
+        }
+    }
 }
-
-// the output to our `create_user` handler
-#[derive(Serialize)]
-struct User {
-    id: u64,
-    username: String,
-}
-*/
