@@ -3,13 +3,6 @@ name = "etherweasel_rs"
 version = "0.1.0"
 edition = "2021"
 
-# This target is required as a dummy target to allow cargo to cache dependencies
-# during build. See https://stackoverflow.com/a/39662015/3888444 and
-# https://doc.rust-lang.org/cargo/reference/manifest.html
-[lib]
-name = "cache"
-path = "cache.rs"
-
 [dependencies]
 af_packet = "0.3.1"
 dns-parser = "0.8.0"
