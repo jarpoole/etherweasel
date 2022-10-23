@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-af_packet = "0.3.1"
+#af_packet = "0.3.1"
 dns-parser = "0.8.0"
 pktparse = "0.7.1"
 nom = "7.1.1"
@@ -24,3 +24,11 @@ socket2 = "0.4.7"
 bytes = "1"
 num_cpus = "1.13.1"
 
+# Cross compilation definition
+[package.metadata.cross.target.aarch64-unknown-linux-gnu.zig]
+enable= true
+# Select a glibc version which is compatible with the 
+# the Raspberry Pi OS 64-bit (Debian Bullseye). Find the
+# version using
+#   ldd --version
+version = "2.31"  
