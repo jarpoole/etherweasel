@@ -2,10 +2,25 @@
 
 ### Installation
 
+Install rust
+
 ```
 sudo apt-get update
 sudo apt install build-essential
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+Install raspberry pi cross-compilation tools
+
+```bash
+rustup target add aarch64-unknown-linux-gnu
+sudo  apt install gcc-aarch64-linux-gnu
+```
+
+Using cross
+
+```
+cargo install cross --git https://github.com/cross-rs/cross
 ```
 
 ### Build

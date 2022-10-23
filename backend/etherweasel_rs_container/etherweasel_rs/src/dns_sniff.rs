@@ -4,6 +4,7 @@
 //extern crate num_cpus;
 //extern crate pktparse;
 
+/*
 use af_packet::rx;
 //use std::env;
 use dns_parser::Packet;
@@ -80,3 +81,4 @@ pub fn start(interface_name: &str) {
         thread::sleep(std::time::Duration::from_secs(1));
     }
 }
+*/

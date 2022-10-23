@@ -24,5 +24,5 @@ ip link set ethmitmA promisc on
 ip link set ethmitmB promisc on
 
 service redis-server start
-cargo run "$@" & 
+cargo run -- "$@" & 
 bash
