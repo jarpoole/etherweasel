@@ -23,6 +23,14 @@ Using cross
 cargo install cross --git https://github.com/cross-rs/cross
 ```
 
+Enable SPI
+
+```
+sudo raspi-config
+```
+
+Then select (3) Interface options, SPI and select enable
+
 ### Build
 
 ```
