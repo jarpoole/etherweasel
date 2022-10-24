@@ -12,16 +12,7 @@ pub struct HardwareDriver {
 }
 
 impl HardwareDriver {
-    pub fn new(path: &str) -> Self {
-        let mut handle = Spidev::open(path).unwrap();
-        let options = SpidevOptions::new()
-            .bits_per_word(8)
-            .max_speed_hz(20_000)
-            .mode(SpiModeFlags::SPI_MODE_0)
-            .build();
-        handle.configure(&options).unwrap();
-        Self { handle }
-    }
+    pub fn new(path: &str) -> Self {}
 }
 
 #[async_trait]
