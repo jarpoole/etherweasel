@@ -17,7 +17,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-struct State {}
+const SPI_INTERFACE: &str = "/dev/spidev0.0";
 
 #[derive(Parser)]
 struct Cli {
@@ -33,7 +33,7 @@ async fn main() {
     let args = Cli::parse();
     let driver_guard: DriverGuard = Arc::new(Mutex::new(match args.driver.as_str() {
         "mock" => Box::new(MockDriver::new()),
-        "hardware" => Box::new(HardwareDriver {}),
+        "hardware" => Box::new(HardwareDriver::new(SPI_INTERFACE)),
         &_ => panic!("invalid driver"),
     }));
     let mode = match DriverMode::from(&args.mode) {
@@ -46,7 +46,7 @@ async fn main() {
     );
 
     // Configure the driver
-    set_mode(driver_guard.clone(), mode).await;
+    set_mode(driver_guard.clone(), mode).await.unwrap();
 
     //dns_sniff::start("eth0");
 
