@@ -46,7 +46,7 @@ async fn main() {
     );
 
     // Configure the driver
-    set_mode(driver_guard.clone(), mode).await;
+    set_mode(driver_guard.clone(), mode).await.unwrap();
 
     //dns_sniff::start("eth0");
 
