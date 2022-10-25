@@ -7,7 +7,7 @@ class Home extends React.Component {
   render() {
     return (
       <React.Fragment>
-        <Header title="Home" description="Home is where the heart is."></Header>
+        <Header title="Home" description="Home is where the heart is." />
         <Typography paragraph>
           Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
           eiusmod tempor incididunt ut labore et dolore magna aliqua. Rhoncus

@@ -32,10 +32,7 @@ class SideBar extends React.Component {
               protocols={this.props.protocols}
             ></ModificationTab>
 
-            <AnalyticsTab
-              name="Analytics"
-              devices={this.props.analytics}
-            ></AnalyticsTab>
+            <AnalyticsTab name="Analytics"></AnalyticsTab>
           </List>
         </Box>
       </Drawer>

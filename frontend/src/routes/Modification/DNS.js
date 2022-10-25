@@ -1,14 +1,20 @@
 import React from "react";
 
+import Grid from "@mui/material/Grid";
+import Paper from "@mui/material/Paper";
+import Switch from "@mui/material/Switch";
+
 import Header from "../../components/Header";
 
 class DNS extends React.Component {
   render() {
     return (
-      <Header
-        title="DNS"
-        description="The Domain Name System (DNS) is the hierarchical and decentralized naming system used to identify computers reachable through the Internet or other Internet Protocol (IP) networks."
-      >
+      <React.Fragment>
+        <Header
+          title="DNS"
+          description="The Domain Name System (DNS) is the hierarchical and decentralized naming system used to identify computers reachable through the Internet or other Internet Protocol (IP) networks."
+        />
+
         <p>
           Ether Weasel allows users to attack perform DNS spoofing, also
           referred to as DNS cache poisoning. This attack corrupts Domain Name
@@ -17,7 +23,21 @@ class DNS extends React.Component {
           This results in traffic being diverted to the attacker's computer (or
           any other computer).
         </p>
-      </Header>
+
+        <Grid container spacing={2} style={{ paddingTop: 20 }}>
+          <Grid item xs={12}>
+            <Paper elevation={1} className="paperPadding">
+              Active Mode:
+              {
+                <Switch
+                  checked={this.props.isActiveMode}
+                  onChange={this.props.updateIsActiveMode}
+                />
+              }
+            </Paper>
+          </Grid>
+        </Grid>
+      </React.Fragment>
     );
   }
 }

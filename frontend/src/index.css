@@ -19,3 +19,19 @@ code {
   font-weight: 400;
   margin: 0px 0px 16px;
 }
+
+.lineGraphHeight {
+  height: 600px;
+}
+
+.pieGraphHeight {
+  height: 242px;
+}
+
+.paperPadding {
+  padding: 24px;
+}
+
+.graphTitle {
+  margin-top: 0px;
+}

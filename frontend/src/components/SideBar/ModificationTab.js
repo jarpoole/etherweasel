@@ -4,6 +4,7 @@ import TabWithChildren from "./TabWithChildren";
 import UnstyledLink from "../UnstyledLink";
 
 import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
@@ -11,29 +12,27 @@ import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRig
 import BuildIcon from "@mui/icons-material/Build";
 
 class ModificationTab extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
   createChildListItem = (child) => {
     var childListItem = (
-      <ListItemButton
-        key={child.id}
-        disabled={!child.isImplemented}
-        sx={{ pl: 4 }}
-      >
+      <ListItemButton disabled={!child.isImplemented} sx={{ pl: 4 }}>
         <ListItemIcon>
           <SubdirectoryArrowRightIcon />
         </ListItemIcon>
         <ListItemText primary={child.name} />
       </ListItemButton>
     );
+
     return child.isImplemented ? (
-      <UnstyledLink to={`/Modification/${child.name}`}>
+      <UnstyledLink
+        key={child.id.toString()}
+        to={`/Modification/${child.name}`}
+      >
         {childListItem}
       </UnstyledLink>
     ) : (
-      childListItem
+      <ListItem disableGutters disablePadding key={child.id.toString()}>
+        {childListItem}
+      </ListItem>
     );
   };
 

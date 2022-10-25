@@ -3,18 +3,24 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
-import { createBrowserRouter, RouterProvider, Route } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Home from "./routes/Home";
 import DNS from "./routes/Modification/DNS";
-import Host from "./routes/Analytics/Host";
-import MitMAttackDevice from "./routes/Analytics/MitMAttackDevice";
-import NetworkGateway from "./routes/Analytics/NetworkGateway";
+import Analytics from "./routes/Analytics";
 
-const router = createBrowserRouter([
+const routePathNames = {
+  "/": "Home",
+  "/Modification": "Modification",
+  "/Modification/DNS": "DNS",
+  "/Analytics": "Analytics",
+};
+const unreachablePages = ["/Modification"];
+
+const routerPaths = [
   {
     path: "/",
     element: (
-      <App>
+      <App routePathNames={routePathNames} unreachablePages={unreachablePages}>
         <Home />
       </App>
     ),
@@ -22,36 +28,21 @@ const router = createBrowserRouter([
   {
     path: "/Modification/DNS",
     element: (
-      <App>
+      <App routePathNames={routePathNames} unreachablePages={unreachablePages}>
         <DNS />
       </App>
     ),
   },
   {
-    path: "/Analytics/Host",
+    path: "/Analytics",
     element: (
-      <App>
-        <Host />
+      <App routePathNames={routePathNames} unreachablePages={unreachablePages}>
+        <Analytics />
       </App>
     ),
   },
-  {
-    path: "/Analytics/MitMAttackDevice",
-    element: (
-      <App>
-        <MitMAttackDevice />
-      </App>
-    ),
-  },
-  {
-    path: "/Analytics/NetworkGateway",
-    element: (
-      <App>
-        <NetworkGateway />
-      </App>
-    ),
-  },
-]);
+];
+const router = createBrowserRouter(routerPaths);
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(

@@ -1,13 +1,13 @@
 import React from "react";
 
-function UnstyledLink(props) {
-  return (
-    <React.Fragment>
-      <h1>{props.title}</h1>
-      <p class="description">{props.description}</p>
-      {props.children}
-    </React.Fragment>
-  );
+class Header extends React.Component {
+  render() {
+    return (
+      <React.Fragment>
+        <h1>{this.props.title}</h1>
+        <p className="description">{this.props.description}</p>
+      </React.Fragment>
+    );
+  }
 }
-
-export default UnstyledLink;
+export default Header;
