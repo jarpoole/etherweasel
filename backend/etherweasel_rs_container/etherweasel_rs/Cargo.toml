@@ -22,7 +22,7 @@ serde = { version = "1.0.138", features = ["derive"] }
 # Extras
 socket2 = "0.4.7"
 bytes = "1"
-num_cpus = "1.13.1"
+sysinfo = "0.26.5"
 
 # Cross compilation definition
 [package.metadata.cross.target.aarch64-unknown-linux-gnu.zig]

@@ -15,9 +15,11 @@ use serde::{Deserialize, Serialize};
 use std::env;
 use std::net::SocketAddr;
 use std::sync::Arc;
+use sysinfo::{CpuExt, CpuRefreshKind, RefreshKind, System, SystemExt};
 use tokio::sync::Mutex;
 
 const SPI_INTERFACE: &str = "/dev/spidev0.0";
+const API_PORT: u16 = 3000;
 
 #[derive(Parser)]
 struct Cli {
@@ -46,9 +48,18 @@ async fn main() {
     );
 
     // Configure the driver
-    set_mode(driver_guard.clone(), mode).await.unwrap();
+    set_mode(driver_guard.clone(), mode).await;
 
     //dns_sniff::start("eth0");
+
+    //
+    let sys_info_guard = Arc::new(Mutex::new(System::new_with_specifics(
+        RefreshKind::new()
+            .with_cpu(CpuRefreshKind::everything())
+            .with_memory()
+            .with_networks()
+            .with_networks_list(),
+    )));
 
     // initialize tracing
     tracing_subscriber::fmt::init();
@@ -58,12 +69,15 @@ async fn main() {
         .route("/ping", get(ping))
         .route("/mode", get(get_mode_handler))
         .route("/mode", post(set_mode_handler))
-        .layer(Extension(driver_guard));
+        .route("/performance", get(get_performance_stats))
+        .route("/info", get(get_device_info))
+        .layer(Extension(driver_guard))
+        .layer(Extension(sys_info_guard));
 
     // Notice we listen on all interfaces here (0.0.0.0) instead
     // of the standard localhost (127.0.0.1) because we would like
-    // the server to be accessible from outside the docker container
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
+    // the server to be accessible from the outside network
+    let addr = SocketAddr::from(([0, 0, 0, 0], API_PORT));
     tracing::debug!("listening on {}", addr);
     println!("Started server");
     axum::Server::bind(&addr)
@@ -129,4 +143,56 @@ async fn get_mode(driver_guard: DriverGuard) -> Result<DriverMode, ()> {
             Err(())
         }
     }
+}
+
+#[derive(Serialize)]
+struct PerformanceStats {
+    free_memory: u64,
+    total_memory: u64,
+    cpu_frequency: u64,
+    cpu_usage: f32,
+}
+
+#[axum::debug_handler]
+async fn get_performance_stats(
+    Extension(sys_info_guard): Extension<Arc<Mutex<System>>>,
+) -> impl IntoResponse {
+    let mut sys_info = sys_info_guard.lock().await;
+    sys_info.refresh_all();
+    (
+        StatusCode::OK,
+        Json(PerformanceStats {
+            free_memory: sys_info.free_memory(),
+            total_memory: sys_info.total_memory(),
+            cpu_frequency: sys_info.global_cpu_info().frequency() * 1000000,
+            cpu_usage: sys_info.global_cpu_info().cpu_usage(),
+        }),
+    )
+}
+
+#[derive(Serialize)]
+struct DeviceInfo {
+    name: Option<String>,
+    os_name: Option<String>,
+    os_version: Option<String>,
+    kernel_version: Option<String>,
+    uptime: u64,
+}
+
+#[axum::debug_handler]
+async fn get_device_info(
+    Extension(sys_info_guard): Extension<Arc<Mutex<System>>>,
+) -> impl IntoResponse {
+    let mut sys_info = sys_info_guard.lock().await;
+    sys_info.refresh_all();
+    (
+        StatusCode::OK,
+        Json(DeviceInfo {
+            name: sys_info.host_name(),
+            os_name: sys_info.name(),
+            os_version: sys_info.os_version(),
+            kernel_version: sys_info.kernel_version(),
+            uptime: sys_info.uptime(),
+        }),
+    )
 }
