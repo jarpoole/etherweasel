@@ -17,6 +17,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use sysinfo::{CpuExt, CpuRefreshKind, RefreshKind, System, SystemExt};
 use tokio::sync::Mutex;
+use tower_http::cors::CorsLayer;
 
 const SPI_INTERFACE: &str = "/dev/spidev0.0";
 const API_PORT: u16 = 3000;
@@ -71,6 +72,7 @@ async fn main() {
         .route("/mode", post(set_mode_handler))
         .route("/performance", get(get_performance_stats))
         .route("/info", get(get_device_info))
+        .layer(CorsLayer::very_permissive())
         .layer(Extension(driver_guard))
         .layer(Extension(sys_info_guard));
 
