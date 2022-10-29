@@ -2,6 +2,7 @@ import React from "react";
 import Box from "@mui/material/Box";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
+import EtherWeaselService from "./services/EtherWeaselService";
 import SideBar from "./components/SideBar/SideBar";
 import NavBar from "./components/AppBar";
 import Breadcrumbs from "./components/Breadcrumbs";
@@ -41,13 +42,22 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      isActiveMode: true,
+      deviceMode: EtherWeaselService.deviceModes.DISCONNECTED,
     };
   }
 
-  updateIsActiveMode = () => {
+  async componentDidMount() {
     this.setState({
-      isActiveMode: !this.state.isActiveMode,
+      deviceMode: await EtherWeaselService.fetchDeviceStatus(),
+    });
+  }
+
+  updateDeviceMode = () => {
+    this.setState({
+      deviceMode:
+        this.state.deviceMode === EtherWeaselService.deviceModes.ACTIVE
+          ? EtherWeaselService.deviceModes.PASSIVE
+          : EtherWeaselService.deviceModes.ACTIVE,
     });
   };
 
@@ -56,8 +66,8 @@ class App extends React.Component {
       this.props.children,
       (Child, i) => {
         return React.cloneElement(Child, {
-          isActiveMode: this.state.isActiveMode,
-          updateIsActiveMode: this.updateIsActiveMode,
+          deviceMode: this.state.deviceMode,
+          updateDeviceMode: this.updateDeviceMode,
         });
       }
     );

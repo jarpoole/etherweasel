@@ -1,0 +1,5 @@
+FROM node:18.9.1-buster
+
+WORKDIR /frontend
+
+CMD ["npm", "run", "start"]

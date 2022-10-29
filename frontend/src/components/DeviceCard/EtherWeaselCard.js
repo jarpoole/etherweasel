@@ -10,8 +10,10 @@ import Chip from "@mui/material/Chip";
 import DeveloperBoardIcon from "@mui/icons-material/DeveloperBoard";
 import ToggleOnOutlinedIcon from "@mui/icons-material/ToggleOnOutlined";
 import ToggleOffOutlinedIcon from "@mui/icons-material/ToggleOffOutlined";
+import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 
 import DeviceCard from "./DeviceCard";
+import EtherWeaselService from "../../services/EtherWeaselService";
 
 const theme = createTheme({
   palette: {
@@ -23,12 +25,44 @@ const theme = createTheme({
 });
 
 class EtherWeaselCard extends React.Component {
-  generateModeChip = (isActiveMode) => {
-    return isActiveMode ? (
-      <Chip icon={<ToggleOnOutlinedIcon />} color="success" label="Active" />
-    ) : (
-      <Chip icon={<ToggleOffOutlinedIcon />} color="neutral" label="Passive" />
-    );
+  generateModeChip = (deviceMode) => {
+    if (deviceMode === EtherWeaselService.deviceModes.DISCONNECTED) {
+      return (
+        <Chip
+          data-test-id="EtherWeaselStatusChip"
+          icon={<HighlightOffIcon />}
+          color="error"
+          label="Disconnected"
+        />
+      );
+    } else if (deviceMode === EtherWeaselService.deviceModes.PASSIVE) {
+      return (
+        <Chip
+          data-test-id="EtherWeaselStatusChip"
+          icon={<ToggleOffOutlinedIcon />}
+          color="neutral"
+          label="Passive"
+        />
+      );
+    } else if (deviceMode === EtherWeaselService.deviceModes.ACTIVE) {
+      return (
+        <Chip
+          data-test-id="EtherWeaselStatusChip"
+          icon={<ToggleOnOutlinedIcon />}
+          color="success"
+          label="Active"
+        />
+      );
+    } else {
+      return (
+        <Chip
+          data-test-id="EtherWeaselStatusChip"
+          icon={<HighlightOffIcon />}
+          color="error"
+          label="Error"
+        />
+      );
+    }
   };
 
   render() {
@@ -52,7 +86,7 @@ class EtherWeaselCard extends React.Component {
                   {"Status"}
                 </TableCell>
                 <TableCell align="right">
-                  {this.generateModeChip(this.props.isActiveMode)}
+                  {this.generateModeChip(this.props.deviceMode)}
                 </TableCell>
               </TableRow>
               <TableRow

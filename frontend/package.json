@@ -21,10 +21,8 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "start": "PORT=3005 react-scripts start",
+    "build": "PORT=3005 react-scripts build"
   },
   "eslintConfig": {
     "extends": [
@@ -43,5 +41,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.27.1"
   }
 }

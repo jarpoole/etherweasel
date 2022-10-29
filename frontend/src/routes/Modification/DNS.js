@@ -5,6 +5,7 @@ import Paper from "@mui/material/Paper";
 import Switch from "@mui/material/Switch";
 
 import Header from "../../components/Header";
+import EtherWeaselService from "../../services/EtherWeaselService";
 
 class DNS extends React.Component {
   render() {
@@ -30,8 +31,16 @@ class DNS extends React.Component {
               Active Mode:
               {
                 <Switch
-                  checked={this.props.isActiveMode}
-                  onChange={this.props.updateIsActiveMode}
+                  data-test-id="ActiveModeControlSwitch"
+                  disabled={
+                    this.props.deviceMode ===
+                    EtherWeaselService.deviceModes.DISCONNECTED
+                  }
+                  checked={
+                    this.props.deviceMode ===
+                    EtherWeaselService.deviceModes.ACTIVE
+                  }
+                  onChange={this.props.updateDeviceMode}
                 />
               }
             </Paper>
