@@ -28,7 +28,7 @@ class Analytics extends React.Component {
                 <Grid item xs={4}>
                   <EtherWeaselCard
                     title={"Ether-Weasel"}
-                    isActiveMode={this.props.isActiveMode}
+                    deviceMode={this.props.deviceMode}
                     successfulModifications={12}
                   />
                 </Grid>
