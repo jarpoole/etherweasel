@@ -23,6 +23,12 @@ Using cross
 cargo install cross --git https://github.com/cross-rs/cross
 ```
 
+Install sshpass
+
+```bash
+sudo apt install sshpass
+```
+
 Enable SPI
 
 ```

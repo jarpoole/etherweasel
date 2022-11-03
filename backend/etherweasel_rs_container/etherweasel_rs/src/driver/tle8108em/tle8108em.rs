@@ -17,6 +17,7 @@ pub enum Channel {
     CH7 = 7,
     CH8 = 8,
 }
+#[derive(Clone, Copy)]
 pub enum ChannelMode {
     CLEAR = 0b00,
     INPUT = 0b01,
@@ -24,6 +25,7 @@ pub enum ChannelMode {
     OFF = 0b11,
 }
 
+#[derive(Clone, Copy)]
 pub enum ChannelDiag {
     OK = 0b11,
     SCB = 0b10,
