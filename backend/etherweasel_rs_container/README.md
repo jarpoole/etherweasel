@@ -51,15 +51,19 @@ Install pcap
 sudo apt install libpcap-dev
 ```
 
-To prevent root permissions from being required, run the following command
-
 Enable SPI
 
 ```
 sudo raspi-config
+sudo reboot
 ```
 
-Then select (3) Interface options, SPI and select enable
+Then select (3) Interface options, SPI and select enable. If after a reboot the spi interfaces still don't show up in `/dev` then try
+adding `dtparam=spi=on` to `/boot/config.txt` and reboot again.
+
+```bash
+
+```
 
 ### Build
 

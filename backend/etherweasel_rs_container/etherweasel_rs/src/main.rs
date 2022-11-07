@@ -52,6 +52,9 @@ async fn main() {
     set_mode(driver_guard.clone(), mode).await;
 
     //dns_sniff::start("eth0");
+    for device in pcap::Device::list().expect("device lookup failed") {
+        println!("Found device! {:?}", device);
+    }
 
     //
     let sys_info_guard = Arc::new(Mutex::new(System::new_with_specifics(
