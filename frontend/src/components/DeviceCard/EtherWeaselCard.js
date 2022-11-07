@@ -95,11 +95,9 @@ class EtherWeaselCard extends React.Component {
                 }}
               >
                 <TableCell component="th" scope="row">
-                  {"DNS Modifications"}
+                  {"Name"}
                 </TableCell>
-                <TableCell align="right">
-                  {this.props.successfulModifications}
-                </TableCell>
+                <TableCell align="right">{this.props.name}</TableCell>
               </TableRow>
             </TableBody>
           </Table>

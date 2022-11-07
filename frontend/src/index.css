@@ -21,11 +21,11 @@ code {
 }
 
 .lineGraphHeight {
-  height: 600px;
+  height: 400px;
 }
 
 .pieGraphHeight {
-  height: 242px;
+  height: 161px;
 }
 
 .paperPadding {
@@ -34,4 +34,6 @@ code {
 
 .graphTitle {
   margin-top: 0px;
+  margin-bottom: 15px;
+  font-size: 1.25rem;
 }
