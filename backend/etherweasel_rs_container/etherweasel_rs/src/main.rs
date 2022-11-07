@@ -11,7 +11,7 @@ use axum::{
 };
 use clap::{Parser, ValueEnum};
 use driver::{
-    docker_driver::DockerDriver,
+    docker_driver::{DockerDriver,DockerDriverConfig},
     driver::{DriverGuard, DriverMode},
     hardware_driver::HardwareDriver,
     mock_driver::MockDriver,
@@ -82,7 +82,17 @@ async fn main() {
     let args = Cli::parse();
     let driver_guard: DriverGuard = Arc::new(Mutex::new(match args.driver {
         Driver::MOCK => Box::new(MockDriver::new()),
-        Driver::DOCKER => Box::new(DockerDriver::new()),
+        Driver::DOCKER => Box::new(DockerDriver::new(
+            DockerDriverConfig{
+                ethernet_a: "ethmitmA",
+                ethernet_b: "ethmitmB",
+                interface_a: "tapA",
+                interface_b: "tapB",
+                bridge_a: "brA",
+                bridge_b: "brB",
+                bridge_ab: "brAB",
+            }
+        )),
         Driver::HARDWARE => Box::new(HardwareDriver::new(SPI_INTERFACE)),
     }));
     let driver_mode = match args.mode {

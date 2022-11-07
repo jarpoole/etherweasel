@@ -3,14 +3,26 @@ use async_trait::async_trait;
 use futures::stream::TryStreamExt;
 use rtnetlink::{new_connection, Error, Handle};
 
+pub struct DockerDriverConfig {
+    pub ethernet_a: &'static str,
+    pub ethernet_b: &'static str,
+    pub interface_a: &'static str,
+    pub interface_b: &'static str,
+    pub bridge_a: &'static str,
+    pub bridge_b: &'static str,
+    pub bridge_ab: &'static str,
+}
+
 pub struct DockerDriver {
+    config: DockerDriverConfig,
     mode: DriverMode,
 }
 
 impl DockerDriver {
-    pub fn new() -> Self {
+    pub fn new(config: DockerDriverConfig) -> Self {
         Self {
             mode: DriverMode::DISCONNECTED,
+            config,
         }
     }
 }
@@ -24,21 +36,21 @@ impl Driver for DockerDriver {
 
         if mode == DriverMode::ACTIVE {
             // Bridge veth and tap A
-            set_interface_master(&handle, "ethmitmA", "brA").await?;
-            set_interface_master(&handle, "tapA", "brA").await?;
+            set_interface_master(&handle, self.config.ethernet_a, self.config.bridge_a).await?;
+            set_interface_master(&handle, self.config.interface_a, self.config.bridge_a).await?;
             // Bridge veth and tap B
-            set_interface_master(&handle, "ethmitmB", "brB").await?;
-            set_interface_master(&handle, "tapB", "brB").await?;
+            set_interface_master(&handle, self.config.ethernet_b, self.config.bridge_b).await?;
+            set_interface_master(&handle, self.config.interface_b, self.config.bridge_b).await?;
             // Bring both taps up
-            set_interface_up(&handle, "tabA").await?;
-            set_interface_up(&handle, "tabB").await?;
+            set_interface_up(&handle, self.config.interface_a).await?;
+            set_interface_up(&handle, self.config.interface_b).await?;
             // Update the local state
             self.mode = DriverMode::ACTIVE;
         } else {
-            set_interface_nomaster(&handle, "tapA").await?;
-            set_interface_nomaster(&handle, "tapB").await?;
-            set_interface_master(&handle, "ethmitmA", "brAB").await?;
-            set_interface_master(&handle, "ethmitmB", "brAB").await?;
+            set_interface_nomaster(&handle, self.config.interface_a).await?;
+            set_interface_nomaster(&handle, self.config.interface_b).await?;
+            set_interface_master(&handle, self.config.ethernet_a, self.config.bridge_ab).await?;
+            set_interface_master(&handle, self.config.ethernet_b, self.config.bridge_ab).await?;
             self.mode = DriverMode::PASSIVE;
         }
 
