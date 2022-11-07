@@ -1,10 +1,11 @@
 FROM ubuntu:latest
 
+RUN ls
 RUN apt-get update
 # Install networking binaries
 RUN apt-get install -y iproute2 iptables curl
 # Install etherweasel_rs application dependencies
-RUN apt-get install -y redis-server
+RUN apt-get install -y libpcap-dev 
 # Install etherweasel_rs toolchain dependencies
 RUN apt-get install -y build-essential 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y

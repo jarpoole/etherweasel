@@ -1,5 +1,6 @@
 use spidev::{SpiModeFlags, Spidev, SpidevOptions, SpidevTransfer};
 use std::io;
+use tracing::trace;
 
 const TLE8108EM_SPI_SCLK_HZ: u32 = 100000;
 const TLE8108EM_SPI_MODE: SpiModeFlags = SpiModeFlags::SPI_MODE_1;
@@ -142,10 +143,10 @@ impl TLE8108EM {
 }
 
 fn transfer(spi: &mut Spidev, payload: BinaryRegister) -> io::Result<BinaryRegister> {
-    println!("SPI TX: 0x{:X}{:X}", payload[1], payload[0]);
+    trace!("SPI TX: 0x{:X}{:X}", payload[1], payload[0]);
     let mut response = [0; 2];
     let mut transfer = SpidevTransfer::read_write(&payload, &mut response);
     spi.transfer(&mut transfer)?;
-    println!("SPI RX: 0x{:X}{:X}", response[1], response[0]);
+    trace!("SPI RX: 0x{:X}{:X}", response[1], response[0]);
     Ok(response)
 }

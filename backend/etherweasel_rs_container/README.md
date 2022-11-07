@@ -30,10 +30,11 @@ sudo apt install sshpass
 ```
 
 Install a new raspberry pi image using `Raspberry Pi OS lite 64bit`, preferably using the raspberry Pi imager so that ssh can be enabled.
-update vim
+update vim and install dig
 
 ```bash
 sudo apt install vim
+sudo apt-get install dnsutils
 ```
 
 add a static ip by adding the following lines to `/etc/dhcpcd.conf`

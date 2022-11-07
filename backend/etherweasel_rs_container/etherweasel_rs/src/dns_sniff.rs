@@ -1,3 +1,41 @@
+use dns_parser::Packet;
+use nom::IResult;
+use pcap::Capture;
+use pktparse::{ethernet, ip, ipv4, udp};
+use std::thread;
+
+pub fn start(interface_name: &'static str) {
+    thread::spawn(move || {
+        println!("Listening on interface {}", interface_name);
+        let mut cap = Capture::from_device(interface_name)
+            .unwrap()
+            .immediate_mode(true)
+            .open()
+            .unwrap();
+        cap.filter("port 53", true).unwrap();
+        while let Ok(packet) = cap.next_packet() {
+            println!("");
+            println!("got packet! {:?}", packet);
+            if let IResult::Ok((remainder, frame)) = ethernet::parse_ethernet_frame(&packet.data) {
+                if frame.ethertype == ethernet::EtherType::IPv4 {
+                    if let IResult::Ok((remainder, v4)) = ipv4::parse_ipv4_header(&remainder) {
+                        if v4.protocol == ip::IPProtocol::UDP {
+                            if let IResult::Ok((remainder, udp)) = udp::parse_udp_header(&remainder)
+                            {
+                                if udp.source_port == 53 || udp.dest_port == 53 {
+                                    let dns = Packet::parse(&remainder);
+                                    println!("{:?}", dns);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+    ()
+}
+
 //extern crate af_packet;
 //extern crate dns_parser;
 //extern crate nom;
@@ -10,7 +48,6 @@ use af_packet::rx;
 use dns_parser::Packet;
 use nom::IResult;
 use pktparse::{ethernet, ip, ipv4, udp};
-use std::thread;
 
 pub fn start(interface_name: &str) {
     //let args: Vec<String> = env::args().collect();
