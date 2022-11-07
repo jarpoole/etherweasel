@@ -8,11 +8,13 @@ use axum::{
     Extension, Json, Router,
 };
 use clap::Parser;
-use driver::driver::{DriverGuard, DriverMode};
-use driver::hardware_driver::HardwareDriver;
-use driver::mock_driver::MockDriver;
+use driver::{
+    docker_driver::DockerDriver,
+    driver::{DriverGuard, DriverMode},
+    hardware_driver::HardwareDriver,
+    mock_driver::MockDriver,
+};
 use serde::{Deserialize, Serialize};
-use std::env;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use sysinfo::{CpuExt, CpuRefreshKind, RefreshKind, System, SystemExt};
@@ -36,6 +38,7 @@ async fn main() {
     let args = Cli::parse();
     let driver_guard: DriverGuard = Arc::new(Mutex::new(match args.driver.as_str() {
         "mock" => Box::new(MockDriver::new()),
+        "docker" => Box::new(DockerDriver::new()),
         "hardware" => Box::new(HardwareDriver::new(SPI_INTERFACE)),
         &_ => panic!("invalid driver"),
     }));
@@ -49,14 +52,11 @@ async fn main() {
     );
 
     // Configure the driver
-    set_mode(driver_guard.clone(), mode).await;
+    set_mode(driver_guard.clone(), mode)
+        .await
+        .expect("Failed to set driver state");
 
-    //dns_sniff::start("eth0");
-    for device in pcap::Device::list().expect("device lookup failed") {
-        println!("Found device! {:?}", device);
-    }
-
-    //
+    // Configure system monitoring
     let sys_info_guard = Arc::new(Mutex::new(System::new_with_specifics(
         RefreshKind::new()
             .with_cpu(CpuRefreshKind::everything())
@@ -64,6 +64,12 @@ async fn main() {
             .with_networks()
             .with_networks_list(),
     )));
+
+    //
+    for device in pcap::Device::list().expect("device lookup failed") {
+        println!("Found device! {:?}", device);
+    }
+    //dns_sniff::start("eth0");
 
     // initialize tracing
     tracing_subscriber::fmt::init();

@@ -1,6 +1,5 @@
 use spidev::{SpiModeFlags, Spidev, SpidevOptions, SpidevTransfer};
 use std::io;
-use tokio::time::sleep;
 
 const TLE8108EM_SPI_SCLK_HZ: u32 = 100000;
 const TLE8108EM_SPI_MODE: SpiModeFlags = SpiModeFlags::SPI_MODE_1;
