@@ -1,5 +1,7 @@
 mod dns_sniff;
 mod driver;
+use rtnetlink::{new_connection, Error, Handle};
+use futures::stream::TryStreamExt;
 
 use axum::{
     http::StatusCode,
@@ -7,7 +9,7 @@ use axum::{
     routing::{get, post},
     Extension, Json, Router,
 };
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use driver::{
     docker_driver::DockerDriver,
     driver::{DriverGuard, DriverMode},
@@ -20,39 +22,88 @@ use std::sync::Arc;
 use sysinfo::{CpuExt, CpuRefreshKind, RefreshKind, System, SystemExt};
 use tokio::sync::Mutex;
 use tower_http::cors::CorsLayer;
+use std::collections::HashMap;
+
+use tracing::{debug, error, info, span, warn, Level};
 
 const SPI_INTERFACE: &str = "/dev/spidev0.0";
-const API_PORT: u16 = 3000;
 
+// Notice we listen on all interfaces here (0.0.0.0) instead
+// of the standard localhost (127.0.0.1) because we would like
+// the server to be accessible from the outside network
+const API_PORT: u16 = 3000;
+const API_ADDRESS: [u8; 4] = [0,0,0,0];
+
+#[derive(Debug, Clone, ValueEnum)]
+enum Mode {
+    ACTIVE,
+    PASSIVE,
+}
+
+#[derive(Debug, Clone, ValueEnum)]
+enum Driver {
+    HARDWARE,
+    MOCK,
+    DOCKER,
+}
 #[derive(Parser)]
 struct Cli {
-    #[arg(short = 'd', long = "driver", default_value = "hardware")]
-    driver: String,
-    #[arg(short = 'm', long = "mode", default_value = "passive")]
-    mode: String,
+    #[arg(short, long, default_value = "eth0,wlan0",value_delimiter=',')]
+    interface: Vec<String>,
+    #[arg(
+        short,
+        long,
+        default_value_t = Driver::HARDWARE,
+        value_enum
+    )]
+    driver: Driver,
+    #[arg(
+        short,  
+        long , 
+        default_value_t = Mode::PASSIVE,
+        value_enum
+    )]
+    mode: Mode,
+    #[arg(short, long, help = "perform initial hardware discovery, configuration and exit")]
+    configure: bool,
+    #[arg(short, long, action = clap::ArgAction::Count, help = "set the logging level")]
+    verbose: u8,
+}
+
+struct DnsAttack {
+    workers: Vec<String>,
 }
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() {
+    println!("etherweasel_rs running...");
+
     // Handle CLI arguments
     let args = Cli::parse();
-    let driver_guard: DriverGuard = Arc::new(Mutex::new(match args.driver.as_str() {
-        "mock" => Box::new(MockDriver::new()),
-        "docker" => Box::new(DockerDriver::new()),
-        "hardware" => Box::new(HardwareDriver::new(SPI_INTERFACE)),
-        &_ => panic!("invalid driver"),
+    let driver_guard: DriverGuard = Arc::new(Mutex::new(match args.driver {
+        Driver::MOCK => Box::new(MockDriver::new()),
+        Driver::DOCKER => Box::new(DockerDriver::new()),
+        Driver::HARDWARE => Box::new(HardwareDriver::new(SPI_INTERFACE)),
     }));
-    let mode = match DriverMode::from(&args.mode) {
-        Ok(mode) => mode,
-        Err(_) => panic!("invalid mode"),
+    let driver_mode = match args.mode {
+        Mode::PASSIVE => DriverMode::PASSIVE,
+        Mode::ACTIVE => DriverMode::ACTIVE,
     };
-    println!(
-        "etherweasel_rs is running in '{}' mode using the '{}' driver",
-        args.mode, args.driver
-    );
+    let verbosity = match args.verbose {
+        0 => Level::WARN,
+        1 => Level::INFO,
+        2 => Level::DEBUG,
+        _ => Level::TRACE,
+    };
+    // Configure logging 
+    tracing_subscriber::fmt().with_max_level(verbosity).init();
+    // Log the entire configuration
+    debug!("mode: {:?}",args.mode);
+    debug!("driver: {:?}",args.driver);
+    debug!("interfaces: {:?}",args.interface);
 
     // Configure the driver
-    set_mode(driver_guard.clone(), mode)
+    set_mode(driver_guard.clone(), driver_mode)
         .await
         .expect("Failed to set driver state");
 
@@ -65,14 +116,18 @@ async fn main() {
             .with_networks_list(),
     )));
 
+    // Configure 
+    set_promiscuous("eth0").await.expect("failed to set promiscuous mode");
+
+    // Create a map to store the state of the backend dns attacks
+    let mut dns_attacks:HashMap<String,DnsAttack>= HashMap::new();
+
+
     //
     for device in pcap::Device::list().expect("device lookup failed") {
         println!("Found device! {:?}", device);
     }
-    //dns_sniff::start("eth0");
-
-    // initialize tracing
-    tracing_subscriber::fmt::init();
+    dns_sniff::start("eth0");
 
     // build our application with a route
     let app = Router::new()
@@ -85,16 +140,12 @@ async fn main() {
         .layer(Extension(driver_guard))
         .layer(Extension(sys_info_guard));
 
-    // Notice we listen on all interfaces here (0.0.0.0) instead
-    // of the standard localhost (127.0.0.1) because we would like
-    // the server to be accessible from the outside network
-    let addr = SocketAddr::from(([0, 0, 0, 0], API_PORT));
-    tracing::debug!("listening on {}", addr);
-    println!("Started server");
+    let addr = SocketAddr::from((API_ADDRESS, API_PORT));
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
         .unwrap();
+    info!("HTTP server listening on {}", addr);
 }
 
 async fn ping() -> impl IntoResponse {
@@ -120,15 +171,15 @@ async fn set_mode_handler(
     }
 }
 async fn set_mode(driver_guard: DriverGuard, mode: DriverMode) -> Result<(), ()> {
-    println!("Attempting to set mode to {:?}", mode);
+    debug!("Attempting to set mode to {:?}", mode);
     let mut driver = driver_guard.lock().await;
     match driver.set_mode(mode).await {
         Ok(()) => {
-            println!("Successfully set mode to {:?}", mode);
+            debug!("Successfully set mode to {:?}", mode);
             Ok(())
         }
         Err(_) => {
-            println!("Failed to set mode to {:?}", mode);
+            error!("Failed to set mode to {:?}", mode);
             Err(())
         }
     }
@@ -142,15 +193,15 @@ async fn get_mode_handler(Extension(driver_guard): Extension<DriverGuard>) -> im
     }
 }
 async fn get_mode(driver_guard: DriverGuard) -> Result<DriverMode, ()> {
-    println!("Attempting to get mode");
+    debug!("Attempting to get mode");
     let driver = driver_guard.lock().await;
     match driver.get_mode().await {
         Ok(mode) => {
-            println!("Successfully got mode {:?}", mode);
+            debug!("Successfully got mode {:?}", mode);
             Ok(mode)
         }
         Err(_) => {
-            println!("Failed to get mode");
+            error!("Failed to get mode");
             Err(())
         }
     }
@@ -206,4 +257,26 @@ async fn get_device_info(
             uptime: sys_info.uptime(),
         }),
     )
+}
+
+
+async fn set_promiscuous(interface: &str) -> Result<(), Error> {
+    let (connection, handle, _) = new_connection().unwrap();
+    let task = tokio::spawn(connection);
+    let response = handle
+        .link()
+        .get()
+        .match_name(interface.to_string().clone())
+        .execute()
+        .try_next()
+        .await?
+        .ok_or(Error::RequestFailed)?;
+    handle
+        .link()
+        .set(response.header.index)
+        .promiscuous(true)
+        .execute()
+        .await?;
+    task.abort();
+    Ok(())
 }

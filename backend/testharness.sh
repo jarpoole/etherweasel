@@ -90,7 +90,7 @@ elif [[ $TESTMODE = "iperf" ]]; then
 elif [[ $TESTMODE = "dns" ]]; then
     # Build and run
     ./dns_container/run.sh
-    ./etherweasel_rs_container/run.sh
+    ./etherweasel_rs_container/run.sh docker -- --driver=docker --mode=active
     ./server_container/run.sh bind
     # Setup networking
     ./utils/network.sh \

@@ -98,5 +98,5 @@ if [[ $TARGET = "raspi" ]]; then
   sshpass -p "$PASSWORD" rsync ./install.sh "$HOST":~/install.sh
   # Run the binary
   sshpass -p "$PASSWORD" ssh -t "$HOST" ~/install.sh
-  sshpass -p "$PASSWORD" ssh -t "$HOST" ~/etherweasel_rs --driver=hardware "$@"
+  sshpass -p "$PASSWORD" ssh -t "$HOST" ~/etherweasel_rs --driver=hardware -vv "$@"
 fi
