@@ -29,6 +29,30 @@ Install sshpass
 sudo apt install sshpass
 ```
 
+Install a new raspberry pi image using `Raspberry Pi OS lite 64bit`, preferably using the raspberry Pi imager so that ssh can be enabled.
+update vim
+
+```bash
+sudo apt install vim
+```
+
+add a static ip by adding the following lines to `/etc/dhcpcd.conf`
+
+```bash
+interface eth0
+static ip_address=192.168.100.15/24
+static router=192.168.100.1
+static domain_name_servers=192.168.100.1
+```
+
+Install pcap
+
+```
+sudo apt install libpcap-dev
+```
+
+To prevent root permissions from being required, run the following command
+
 Enable SPI
 
 ```
