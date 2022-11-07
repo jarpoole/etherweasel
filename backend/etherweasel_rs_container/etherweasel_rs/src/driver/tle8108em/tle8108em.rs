@@ -1,9 +1,7 @@
 use spidev::{SpiModeFlags, Spidev, SpidevOptions, SpidevTransfer};
 use std::io;
-use std::time::Duration;
 use tokio::time::sleep;
 
-const SWITCHING_TIME_MS: u64 = 500;
 const TLE8108EM_SPI_SCLK_HZ: u32 = 100000;
 const TLE8108EM_SPI_MODE: SpiModeFlags = SpiModeFlags::SPI_MODE_1;
 
@@ -137,16 +135,11 @@ impl TLE8108EM {
         self.modes = Register::<ChannelMode>::reset();
         return self;
     }
-    pub async fn update(&mut self) -> io::Result<()> {
+    pub fn update(&mut self) -> io::Result<()> {
         let response = transfer(&mut self.spidev, self.modes.pack())?;
         self.diags = response.unpack();
-        wait_for_switch().await;
         Ok(())
     }
-}
-
-async fn wait_for_switch() {
-    sleep(Duration::from_millis(SWITCHING_TIME_MS)).await;
 }
 
 fn transfer(spi: &mut Spidev, payload: BinaryRegister) -> io::Result<BinaryRegister> {

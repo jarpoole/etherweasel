@@ -95,6 +95,8 @@ if [[ $TARGET = "raspi" ]]; then
     --target $RASPI_TARGET --release
   # Transfer the binary
   sshpass -p "$PASSWORD" rsync ./etherweasel_rs/target/$RASPI_TARGET/release/etherweasel_rs "$HOST":~/etherweasel_rs
+  sshpass -p "$PASSWORD" rsync ./install.sh "$HOST":~/install.sh
   # Run the binary
+  sshpass -p "$PASSWORD" ssh -t "$HOST" ~/install.sh
   sshpass -p "$PASSWORD" ssh -t "$HOST" ~/etherweasel_rs --driver=hardware "$@"
 fi
