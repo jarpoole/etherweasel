@@ -79,7 +79,7 @@ if [[ $TARGET = "docker" ]]; then
       --memory="$MEMORY_LIMIT" \
       "$( if [[ "$INTERACTIVE" = true ]]; then echo "--detach=false"; else echo "--detach=true"; fi )" \
       "$( ../utils/synchronize.sh etherweasel_rs_backend_instance mount )" \
-      etherweasel_rs_backend_build --driver=mock "$@"
+      etherweasel_rs_backend_build --driver=docker "$@"
 fi
 
 if [[ $TARGET = "local" ]]; then

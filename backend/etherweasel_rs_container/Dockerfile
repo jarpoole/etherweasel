@@ -1,6 +1,5 @@
 FROM ubuntu:latest
 
-RUN ls
 RUN apt-get update
 # Install networking binaries
 RUN apt-get install -y iproute2 iptables curl
