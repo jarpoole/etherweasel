@@ -4,6 +4,7 @@ use super::{
 };
 use async_trait::async_trait;
 use std::time::Duration;
+use tokio::time::sleep;
 
 // EC2-5TNU relay datasheet specifies 2ms operating time
 const SWITCHING_TIME_MS: u64 = 10;

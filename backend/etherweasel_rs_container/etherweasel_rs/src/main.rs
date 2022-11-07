@@ -24,9 +24,9 @@ const API_PORT: u16 = 3000;
 
 #[derive(Parser)]
 struct Cli {
-    #[arg(short = 'd', long = "driver")]
+    #[arg(short = 'd', long = "driver", default_value = "hardware")]
     driver: String,
-    #[arg(short = 'm', long = "mode")]
+    #[arg(short = 'm', long = "mode", default_value = "passive")]
     mode: String,
 }
 
@@ -52,6 +52,9 @@ async fn main() {
     set_mode(driver_guard.clone(), mode).await;
 
     //dns_sniff::start("eth0");
+    for device in pcap::Device::list().expect("device lookup failed") {
+        println!("Found device! {:?}", device);
+    }
 
     //
     let sys_info_guard = Arc::new(Mutex::new(System::new_with_specifics(
