@@ -3,6 +3,10 @@ use super::{
     tle8108em::tle8108em::{Channel, ChannelMode, TLE8108EM},
 };
 use async_trait::async_trait;
+use std::time::Duration;
+
+// EC2-5TNU relay datasheet specifies 2ms operating time
+const SWITCHING_TIME_MS: u64 = 10;
 
 const BLUE_ACTIVE: Channel = Channel::CH4;
 const BLUE_PASSIVE: Channel = Channel::CH8;
@@ -37,9 +41,9 @@ impl Driver for HardwareDriver {
                 .set_channel(ORANGE_ACTIVE, ChannelMode::ON)
                 .set_channel(GREEN_ACTIVE, ChannelMode::ON)
                 .set_channel(BROWN_ACTIVE, ChannelMode::ON)
-                .update()
-                .await?;
-            self.tle8108em.reset_channels().update().await?;
+                .update()?;
+            wait_for_switch().await;
+            self.tle8108em.reset_channels().update()?;
             self.mode = DriverMode::ACTIVE;
         } else {
             self.tle8108em
@@ -48,9 +52,9 @@ impl Driver for HardwareDriver {
                 .set_channel(ORANGE_PASSIVE, ChannelMode::ON)
                 .set_channel(GREEN_PASSIVE, ChannelMode::ON)
                 .set_channel(BROWN_PASSIVE, ChannelMode::ON)
-                .update()
-                .await?;
-            self.tle8108em.reset_channels().update().await?;
+                .update()?;
+            wait_for_switch().await;
+            self.tle8108em.reset_channels().update()?;
             self.mode = DriverMode::PASSIVE;
         }
         Ok(())
@@ -58,4 +62,8 @@ impl Driver for HardwareDriver {
     async fn get_mode(&self) -> Result<DriverMode, ()> {
         Ok(self.mode)
     }
+}
+
+async fn wait_for_switch() {
+    sleep(Duration::from_millis(SWITCHING_TIME_MS)).await;
 }
