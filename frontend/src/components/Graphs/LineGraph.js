@@ -2,80 +2,56 @@ import React from "react";
 import Paper from "@mui/material/Paper";
 import { ResponsiveLine } from "@nivo/line";
 
-const data = [
-  {
-    id: "signal A",
-    data: [
-      { x: "2018-01-01 12:00:01.100", y: 7 },
-      { x: "2018-01-01 12:00:01.110", y: 5 },
-      { x: "2018-01-01 12:00:01.120", y: 11 },
-      { x: "2018-01-01 12:00:01.130", y: 9 },
-      { x: "2018-01-01 12:00:01.140", y: 12 },
-      { x: "2018-01-01 12:00:01.150", y: 16 },
-      { x: "2018-01-01 12:00:01.160", y: 13 },
-      { x: "2018-01-01 12:00:01.170", y: 13 },
-      { x: "2018-01-01 12:00:01.180", y: 13 },
-    ],
-  },
-  {
-    id: "signal B",
-    data: [
-      { x: "2018-01-01 12:00:01.100", y: 5 },
-      { x: "2018-01-01 12:00:01.110", y: 11 },
-      { x: "2018-01-01 12:00:01.120", y: 9 },
-      { x: "2018-01-01 12:00:01.130", y: 12 },
-      { x: "2018-01-01 12:00:01.140", y: 16 },
-      { x: "2018-01-01 12:00:01.150", y: 13 },
-      { x: "2018-01-01 12:00:01.160", y: 13 },
-      { x: "2018-01-01 12:00:01.170", y: 13 },
-      { x: "2018-01-01 12:00:01.180", y: 7 },
-    ],
-  },
-];
-
 class LineGraph extends React.Component {
+  formatData = (data) => {
+    return data.map((y, i) => ({
+      x: i * 5,
+      y: y,
+    }));
+  };
   render() {
     return (
       <Paper elevation={1} className="paperPadding">
         <h2 className="graphTitle">{this.props.title}</h2>
         <div className="lineGraphHeight">
           <ResponsiveLine
-            data={data}
+            data={[
+              { id: this.props.title, data: this.formatData(this.props.data) },
+            ]}
             margin={{ top: 30, right: 30, bottom: 50, left: 50 }}
             xScale={{
-              type: "time",
-              format: "%Y-%m-%d %H:%M:%S.%L",
-              useUTC: false,
-              precision: "millisecond",
+              type: "linear",
+              reverse: true,
             }}
-            xFormat="time:%Y-%m-%d %H:%M:%S.%L"
             yScale={{
               type: "linear",
               min: "0",
-              max: "auto",
+              max: "100",
               reverse: false,
             }}
-            yFormat=" >-.2f"
+            yFormat={(value) => `${value}%`}
             curve="cardinal"
             axisTop={null}
             axisRight={null}
             axisBottom={{
-              format: ".%L",
+              format: (value) => `${value} sec`,
               orient: "bottom",
               tickSize: 5,
               tickPadding: 5,
               tickRotation: 0,
-              legend: "transportation",
+              tickValues: 8,
+              legend: this.props.title,
               legendOffset: 36,
               legendPosition: "middle",
             }}
             axisLeft={{
+              format: (value) => `${value}%`,
               orient: "left",
               tickSize: 5,
               tickPadding: 5,
               tickRotation: 0,
-              legend: "count",
-              legendOffset: -40,
+              legend: "",
+              legendOffset: -45,
               legendPosition: "middle",
             }}
             enableGridX={false}

@@ -21,6 +21,17 @@ class EtherWeaselService {
       return EtherWeaselService.deviceModes.DISCONNECTED;
     }
   }
+
+  static async fetchDevicePerformance() {
+    try {
+      let response = await fetch(EtherWeaselService.url + "performance");
+      let performance = await response.json();
+
+      return performance;
+    } catch (error) {
+      return undefined;
+    }
+  }
 }
 
 export default EtherWeaselService;
