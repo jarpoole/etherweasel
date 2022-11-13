@@ -1,10 +1,7 @@
 mod dns_sniff;
 mod driver;
-use rtnetlink::{new_connection, Error, Handle};
-use futures::stream::TryStreamExt;
-use std::thread;
-
 use axum::{
+    extract::Path,
     http::StatusCode,
     response::IntoResponse,
     routing::{get, post},
@@ -12,20 +9,25 @@ use axum::{
 };
 use clap::{Parser, ValueEnum};
 use driver::{
-    docker_driver::{DockerDriver,DockerDriverConfig},
+    docker_driver::{DockerDriver, DockerDriverConfig},
     driver::{DriverGuard, DriverMode},
     hardware_driver::HardwareDriver,
     mock_driver::MockDriver,
 };
+use futures::stream::TryStreamExt;
+use libc;
+use rtnetlink::{new_connection, Error};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use sysinfo::{CpuExt, CpuRefreshKind, RefreshKind, System, SystemExt};
+use std::thread;
+use sysinfo::{CpuExt, CpuRefreshKind, NetworkData, NetworkExt, RefreshKind, System, SystemExt};
 use tokio::sync::Mutex;
 use tower_http::cors::CorsLayer;
-use std::collections::HashMap;
+use uuid::Uuid;
 
-use tracing::{debug, error, info, span, warn, Level};
+use tracing::{debug, error, info, warn, Level};
 
 const SPI_INTERFACE: &str = "/dev/spidev0.0";
 
@@ -33,7 +35,7 @@ const SPI_INTERFACE: &str = "/dev/spidev0.0";
 // of the standard localhost (127.0.0.1) because we would like
 // the server to be accessible from the outside network
 const API_PORT: u16 = 3000;
-const API_ADDRESS: [u8; 4] = [0,0,0,0];
+const API_ADDRESS: [u8; 4] = [0, 0, 0, 0];
 
 #[derive(Debug, Clone, ValueEnum)]
 enum Mode {
@@ -49,7 +51,7 @@ enum Driver {
 }
 #[derive(Parser)]
 struct Cli {
-    #[arg(short, long, default_value = "eth0,wlan0",value_delimiter=',')]
+    #[arg(short, long, default_value = "eth0,wlan0", value_delimiter = ',')]
     interfaces: Vec<String>,
     #[arg(
         short,
@@ -59,40 +61,63 @@ struct Cli {
     )]
     driver: Driver,
     #[arg(
-        short,  
-        long , 
+        short,
+        long,
         default_value_t = Mode::PASSIVE,
         value_enum
     )]
     mode: Mode,
-    #[arg(short, long, help = "perform initial hardware discovery, configuration and exit")]
+    #[arg(
+        short,
+        long,
+        help = "perform initial hardware discovery, configuration and exit"
+    )]
     configure: bool,
     #[arg(short, long, action = clap::ArgAction::Count, help = "set the logging level")]
     verbose: u8,
 }
 
+enum Attack {
+    SNIFF,
+    DNS,
+}
+
+impl Attack {
+    pub fn from(mode: &str) -> Result<Attack, ()> {
+        match mode {
+            "sniff" => Ok(Attack::SNIFF),
+            "dns" => Ok(Attack::DNS),
+            _ => Err(()),
+        }
+    }
+}
+
+#[derive(Clone)]
+struct EthInterfaces(String, String);
+
+/*
 struct DnsAttack {
     workers: Vec<String>,
 }
 
+type Attacks = ();
+*/
+
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() {
-
     // Handle CLI arguments
     let args = Cli::parse();
     let driver_guard: DriverGuard = Arc::new(Mutex::new(match args.driver {
         Driver::MOCK => Box::new(MockDriver::new()),
-        Driver::DOCKER => Box::new(DockerDriver::new(
-            DockerDriverConfig{
-                ethernet_a: "ethmitmA",
-                ethernet_b: "ethmitmB",
-                interface_a: "tapA",
-                interface_b: "tapB",
-                bridge_a: "brA",
-                bridge_b: "brB",
-                bridge_ab: "brAB",
-            }
-        )),
+        Driver::DOCKER => Box::new(DockerDriver::new(DockerDriverConfig {
+            ethernet_a: "ethmitmA",
+            ethernet_b: "ethmitmB",
+            interface_a: "tapA",
+            interface_b: "tapB",
+            bridge_a: "brA",
+            bridge_b: "brB",
+            bridge_ab: "brAB",
+        })),
         Driver::HARDWARE => Box::new(HardwareDriver::new(SPI_INTERFACE)),
     }));
     let driver_mode = match args.mode {
@@ -105,15 +130,20 @@ async fn main() {
         2 => Level::DEBUG,
         _ => Level::TRACE,
     };
-    let eth_interface_a = String::from(&args.interfaces[0]); 
-    let eth_interface_b = String::from(&args.interfaces[1]); 
+    let eth_interfaces = EthInterfaces(
+        String::from(&args.interfaces[0]),
+        String::from(&args.interfaces[1]),
+    );
 
-    // Configure logging 
+    // Configure logging
     tracing_subscriber::fmt().with_max_level(verbosity).init();
     // Log the entire configuration
-    debug!("mode: {:?}",args.mode);
-    debug!("driver: {:?}",args.driver);
-    debug!("interface A: {:?}, interface B: {:?}",eth_interface_a,eth_interface_b);
+    debug!("mode: {:?}", args.mode);
+    debug!("driver: {:?}", args.driver);
+    debug!(
+        "interface A: {:?}, interface B: {:?}",
+        eth_interfaces.0, eth_interfaces.1
+    );
     if args.interfaces.len() > 2 {
         warn!("Extra interfaces will be ignored");
     }
@@ -134,30 +164,41 @@ async fn main() {
     )));
 
     // Configure interfaces
-    set_promiscuous(eth_interface_a.as_str()).await.expect("failed to set promiscuous mode");
-    set_promiscuous(eth_interface_b.as_str()).await.expect("failed to set promiscuous mode");
+    set_promiscuous(eth_interfaces.0.as_str())
+        .await
+        .expect("failed to set promiscuous mode");
+    set_promiscuous(eth_interfaces.1.as_str())
+        .await
+        .expect("failed to set promiscuous mode");
 
     // Create a map to store the state of the backend dns attacks
-    let mut dns_attacks: HashMap<String,DnsAttack>= HashMap::new();
-
+    //let mut dns_attacks: HashMap<String,DnsAttack>= HashMap::new();
 
     //
     for device in pcap::Device::list().expect("device lookup failed") {
         println!("Found device! {:?}", device);
     }
+
+    let iface = eth_interfaces.clone();
     thread::spawn(move || {
-        dns_sniff::sniff(eth_interface_a.as_str());
+        dns_sniff::sniff(iface.0.as_str());
     });
 
     // build our application with a route
     let app = Router::new()
         .route("/ping", get(ping))
-        .route("/mode", get(get_mode_handler))
-        .route("/mode", post(set_mode_handler))
+        .route("/mode", get(get_mode_handler).post(set_mode_handler))
         .route("/performance", get(get_performance_stats))
+        .route("/networking", get(get_networking))
         .route("/info", get(get_device_info))
+        .route("/attack", post(create_attack_handler))
+        .route(
+            "/attack/:id",
+            get(get_attack_handler).delete(delete_attack_handler),
+        )
         .layer(CorsLayer::very_permissive())
         .layer(Extension(driver_guard))
+        .layer(Extension(eth_interfaces))
         .layer(Extension(sys_info_guard));
 
     let addr = SocketAddr::from((API_ADDRESS, API_PORT));
@@ -228,6 +269,7 @@ async fn get_mode(driver_guard: DriverGuard) -> Result<DriverMode, ()> {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct PerformanceStats {
     free_memory: u64,
     total_memory: u64,
@@ -253,6 +295,71 @@ async fn get_performance_stats(
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct HostNetworking {
+    interface: String,
+    mac_address: Option<String>,
+    connected: bool,
+    // RX statistics
+    rx_bytes: u64,
+    rx_packets: u64,
+    // TX statistics
+    tx_bytes: u64,
+    tx_packets: u64,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct Networking {
+    alice: HostNetworking,
+    bob: HostNetworking,
+}
+
+#[axum::debug_handler]
+async fn get_networking(
+    Extension(sys_info_guard): Extension<Arc<Mutex<System>>>,
+    Extension(interfaces): Extension<EthInterfaces>,
+) -> impl IntoResponse {
+    let mut sys_info = sys_info_guard.lock().await;
+    sys_info.refresh_networks();
+    let stats: HashMap<&String, &NetworkData> = sys_info.networks().into_iter().collect();
+    if let (Some(alice_stats), Some(bob_stats), Ok(alice_link_up), Ok(bob_link_up)) = (
+        stats.get(&interfaces.0),
+        stats.get(&interfaces.1),
+        is_up(&interfaces.0).await,
+        is_up(&interfaces.1).await,
+    ) {
+        (
+            StatusCode::OK,
+            Json(Networking {
+                alice: HostNetworking {
+                    interface: interfaces.0,
+                    mac_address: None,
+                    connected: alice_link_up,
+                    rx_bytes: alice_stats.total_received(),
+                    rx_packets: alice_stats.total_packets_received(),
+                    tx_bytes: alice_stats.total_transmitted(),
+                    tx_packets: alice_stats.total_packets_transmitted(),
+                },
+                bob: HostNetworking {
+                    interface: interfaces.1,
+                    mac_address: None,
+                    connected: bob_link_up,
+                    rx_bytes: bob_stats.total_received(),
+                    rx_packets: bob_stats.total_packets_received(),
+                    tx_bytes: bob_stats.total_transmitted(),
+                    tx_packets: bob_stats.total_packets_transmitted(),
+                },
+            }),
+        )
+            .into_response()
+    } else {
+        StatusCode::INTERNAL_SERVER_ERROR.into_response()
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct DeviceInfo {
     name: Option<String>,
     os_name: Option<String>,
@@ -279,7 +386,6 @@ async fn get_device_info(
     )
 }
 
-
 async fn set_promiscuous(interface: &str) -> Result<(), Error> {
     let (connection, handle, _) = new_connection().unwrap();
     let task = tokio::spawn(connection);
@@ -299,4 +405,69 @@ async fn set_promiscuous(interface: &str) -> Result<(), Error> {
         .await?;
     task.abort();
     Ok(())
+}
+
+async fn is_up(interface: &str) -> Result<bool, Error> {
+    let (connection, handle, _) = new_connection().unwrap();
+    let task = tokio::spawn(connection);
+    let response = handle
+        .link()
+        .get()
+        .match_name(interface.to_string().clone())
+        .execute()
+        .try_next()
+        .await?
+        .ok_or(Error::RequestFailed)?;
+    task.abort();
+    Ok(response.header.flags & libc::IFF_UP as u32 != 0)
+}
+
+#[derive(Deserialize, Debug)]
+struct DnsAttackConfig {
+    domain: String,
+    replacement: String,
+}
+#[derive(Deserialize, Debug)]
+struct SniffAttackConfig {}
+
+#[derive(Deserialize, Debug)]
+#[serde(tag = "type", rename_all = "camelCase")]
+enum CreateAttack {
+    Dns { config: DnsAttackConfig },
+    Sniff { config: SniffAttackConfig },
+}
+
+#[derive(Serialize, Debug)]
+struct CreateAttackResponse {
+    id: Uuid,
+}
+
+#[axum::debug_handler]
+async fn create_attack_handler(Json(payload): Json<CreateAttack>) -> impl IntoResponse {
+    match create_attack(payload) {
+        Ok(id) => (StatusCode::CREATED, Json(CreateAttackResponse { id })).into_response(),
+        Err(()) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+    }
+}
+fn create_attack(attack: CreateAttack) -> Result<Uuid, ()> {
+    debug!("Attempting to create new attack {:?}", attack);
+    match attack {
+        CreateAttack::Dns { .. } => {
+            info!("creating DNS attack");
+            Ok(Uuid::new_v4())
+        }
+        CreateAttack::Sniff { .. } => {
+            info!("creating sniff attack");
+            Ok(Uuid::new_v4())
+        }
+    }
+}
+
+#[axum::debug_handler]
+async fn get_attack_handler(Path(id): Path<Uuid>) -> impl IntoResponse {
+    StatusCode::OK
+}
+#[axum::debug_handler]
+async fn delete_attack_handler(Path(id): Path<Uuid>) -> impl IntoResponse {
+    StatusCode::OK
 }

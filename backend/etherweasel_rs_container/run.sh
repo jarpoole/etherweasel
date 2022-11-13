@@ -6,6 +6,7 @@
 #  2. Headless mode (Non-blocking, useful for automated testing)
 #      
 
+set -e
 cd $(dirname $0)
 
 # Define colors used for console output
@@ -66,6 +67,7 @@ if [[ $TARGET = "docker" ]]; then
 
   # Build
   docker image build . -t etherweasel_rs_backend_build
+  echo -e "${GREEN}Build successful${NC}"
 
   # Run
   docker container run \
