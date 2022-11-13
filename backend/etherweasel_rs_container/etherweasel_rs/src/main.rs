@@ -2,6 +2,7 @@ mod dns_sniff;
 mod driver;
 use rtnetlink::{new_connection, Error, Handle};
 use futures::stream::TryStreamExt;
+use std::thread;
 
 use axum::{
     http::StatusCode,
@@ -49,7 +50,7 @@ enum Driver {
 #[derive(Parser)]
 struct Cli {
     #[arg(short, long, default_value = "eth0,wlan0",value_delimiter=',')]
-    interface: Vec<String>,
+    interfaces: Vec<String>,
     #[arg(
         short,
         long,
@@ -76,7 +77,6 @@ struct DnsAttack {
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() {
-    println!("etherweasel_rs running...");
 
     // Handle CLI arguments
     let args = Cli::parse();
@@ -105,12 +105,19 @@ async fn main() {
         2 => Level::DEBUG,
         _ => Level::TRACE,
     };
+    let eth_interface_a = String::from(&args.interfaces[0]); 
+    let eth_interface_b = String::from(&args.interfaces[1]); 
+
     // Configure logging 
     tracing_subscriber::fmt().with_max_level(verbosity).init();
     // Log the entire configuration
     debug!("mode: {:?}",args.mode);
     debug!("driver: {:?}",args.driver);
-    debug!("interfaces: {:?}",args.interface);
+    debug!("interface A: {:?}, interface B: {:?}",eth_interface_a,eth_interface_b);
+    if args.interfaces.len() > 2 {
+        warn!("Extra interfaces will be ignored");
+    }
+    info!("etherweasel_rs running...");
 
     // Configure the driver
     set_mode(driver_guard.clone(), driver_mode)
@@ -126,18 +133,21 @@ async fn main() {
             .with_networks_list(),
     )));
 
-    // Configure 
-    set_promiscuous("eth0").await.expect("failed to set promiscuous mode");
+    // Configure interfaces
+    set_promiscuous(eth_interface_a.as_str()).await.expect("failed to set promiscuous mode");
+    set_promiscuous(eth_interface_b.as_str()).await.expect("failed to set promiscuous mode");
 
     // Create a map to store the state of the backend dns attacks
-    let mut dns_attacks:HashMap<String,DnsAttack>= HashMap::new();
+    let mut dns_attacks: HashMap<String,DnsAttack>= HashMap::new();
 
 
     //
     for device in pcap::Device::list().expect("device lookup failed") {
         println!("Found device! {:?}", device);
     }
-    dns_sniff::start("eth0");
+    thread::spawn(move || {
+        dns_sniff::sniff(eth_interface_a.as_str());
+    });
 
     // build our application with a route
     let app = Router::new()

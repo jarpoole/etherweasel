@@ -4,7 +4,6 @@ FROM nginx:latest
 RUN apt-get update
 RUN apt-get install -y build-essential iproute2 net-tools ethtool dnsutils
 RUN apt-get install -y iperf3
-RUN apt-get install -y bind9
 RUN apt-get install -y ffmpeg
 
 # Configure NGINX web server

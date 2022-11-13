@@ -1,0 +1,4 @@
+zone "example.local" {
+       type master;
+       file "/bind/example.local.zone";
+};

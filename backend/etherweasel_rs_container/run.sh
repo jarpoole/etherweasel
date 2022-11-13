@@ -54,6 +54,7 @@ if [[ $TARGET = "docker" ]]; then
 
   # Stop if needed
   if docker ps | grep -q -w etherweasel_rs_backend_instance; then
+    echo -e "${YELLOW}Killing old container${NC}"
     docker stop etherweasel_rs_backend_instance  
     docker rm etherweasel_rs_backend_instance  
   fi

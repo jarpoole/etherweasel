@@ -89,18 +89,18 @@ elif [[ $TESTMODE = "iperf" ]]; then
 
 elif [[ $TESTMODE = "dns" ]]; then
     # Build and run
-    ./dns_container/run.sh
-    ./etherweasel_rs_container/run.sh docker -- --mode=active
-    ./server_container/run.sh bind
+    ./dns_container/run.sh --name=alice -- dig
+    ./etherweasel_rs_container/run.sh docker -- --mode=active --interfaces=ethmitmA,ethmitmB -vv
+    ./dns_container/run.sh --name=bob -- bind
     # Setup networking
     ./utils/network.sh \
-        dns_backend_instance \
+        alice_dns_instance \
         etherweasel_rs_backend_instance \
-        server_backend_instance
+        bob_dns_instance
     # Notifies containers that test harness is ready
-    ./utils/synchronize.sh dns_backend_instance notify
+    ./utils/synchronize.sh alice_dns_instance notify
     ./utils/synchronize.sh etherweasel_rs_backend_instance notify
-    ./utils/synchronize.sh server_backend_instance notify
+    ./utils/synchronize.sh bob_dns_instance notify
     # Wait for results
     docker container attach etherweasel_rs_backend_instance
 fi
