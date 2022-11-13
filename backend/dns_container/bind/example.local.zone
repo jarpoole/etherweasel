@@ -1,0 +1,24 @@
+; Configure the primary authoritative nameserver. Only the TTL is
+; relevant here as the RNAME `root@primary.example.local` and 
+; replication parameters 
+$TTL 30
+@ IN SOA primary.example.local. root.primary.example.local. (
+    1        ; Serial number
+    7200     ; Refresh
+    3600     ; Retry
+    1209600  ; Expire
+    3600     ; Negative Cache TTL
+) 
+
+; Define any authoritative nameservers for the
+; DNS zone `example.local` 
+@ IN NS primary.example.local.
+primary IN A 192.168.0.1
+
+; Define some subdomains for testing using address records
+sub1 IN A 192.168.0.1
+sub2 IN A 192.168.0.1
+
+; Define some aliases using canonical records
+alias1 IN CNAME sub1.example.local.
+alias2 IN CNAME sub2.example.local.
