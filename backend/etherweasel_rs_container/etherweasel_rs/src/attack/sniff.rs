@@ -1,35 +1,62 @@
+use super::attack::Attack;
+
 use dns_parser::Packet;
+use erased_serde::Serialize as ErasedSerialize;
 use nom::IResult;
 use pcap::Capture;
 use pktparse::{ethernet, ip, ipv4, udp};
+use serde::Serialize;
+use std::thread::JoinHandle;
 
-pub fn sniff(interface_name: &str) {
-    println!("Listening on interface {}", interface_name);
-    let mut cap = Capture::from_device(interface_name)
-        .unwrap()
-        .immediate_mode(true)
-        .open()
-        .unwrap();
-    cap.filter("port 53", true).unwrap();
-    while let Ok(packet) = cap.next_packet() {
-        println!("");
-        println!("got packet! {:?}", packet);
-        if let IResult::Ok((remainder, frame)) = ethernet::parse_ethernet_frame(&packet.data) {
-            if frame.ethertype == ethernet::EtherType::IPv4 {
-                if let IResult::Ok((remainder, v4)) = ipv4::parse_ipv4_header(&remainder) {
-                    if v4.protocol == ip::IPProtocol::UDP {
-                        if let IResult::Ok((remainder, udp)) = udp::parse_udp_header(&remainder) {
-                            if udp.source_port == 53 || udp.dest_port == 53 {
-                                let dns = Packet::parse(&remainder);
-                                println!("{:?}", dns);
+pub struct Sniff<T> {
+    //tasks: Vec<JoinHandle<T>>,
+    pub test: T,
+}
+#[derive(Serialize)]
+struct SniffedPacket {
+    foo: u32,
+}
+
+impl<T> Attack for Sniff<T> {
+    fn get_logs(&self) -> Vec<Box<dyn ErasedSerialize>> {
+        vec![Box::new(SniffedPacket { foo: 0 })]
+    }
+}
+
+/*
+impl<T> Attack for Sniff<T> {
+    fn get_logs(&self) -> Vec<Box<dyn ErasedSerialize>> {
+        vec![Box::new(SniffedPacket { foo: 0 })]
+    }
+    fn start(interface_name: &str) {
+        println!("Listening on interface {}", interface_name);
+        let mut cap = Capture::from_device(interface_name)
+            .unwrap()
+            .immediate_mode(true)
+            .open()
+            .unwrap();
+        cap.filter("port 53", true).unwrap();
+        while let Ok(packet) = cap.next_packet() {
+            println!("");
+            println!("got packet! {:?}", packet);
+            if let IResult::Ok((remainder, frame)) = ethernet::parse_ethernet_frame(&packet.data) {
+                if frame.ethertype == ethernet::EtherType::IPv4 {
+                    if let IResult::Ok((remainder, v4)) = ipv4::parse_ipv4_header(&remainder) {
+                        if v4.protocol == ip::IPProtocol::UDP {
+                            if let IResult::Ok((remainder, udp)) = udp::parse_udp_header(&remainder)
+                            {
+                                if udp.source_port == 53 || udp.dest_port == 53 {
+                                    let dns = Packet::parse(&remainder);
+                                    println!("{:?}", dns);
+                                }
                             }
                         }
                     }
                 }
             }
         }
+        ()
     }
-    ()
 }
 
 //extern crate af_packet;
@@ -38,7 +65,6 @@ pub fn sniff(interface_name: &str) {
 //extern crate num_cpus;
 //extern crate pktparse;
 
-/*
 use af_packet::rx;
 //use std::env;
 use dns_parser::Packet;

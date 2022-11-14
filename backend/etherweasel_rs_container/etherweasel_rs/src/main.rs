@@ -1,5 +1,7 @@
-mod dns_sniff;
+mod attack;
 mod driver;
+
+use attack::{attack::Attack, sniff::Sniff};
 use axum::{
     extract::Path,
     http::StatusCode,
@@ -8,6 +10,7 @@ use axum::{
     Extension, Json, Router,
 };
 use clap::{Parser, ValueEnum};
+use dashmap::DashMap;
 use driver::{
     docker_driver::{DockerDriver, DockerDriverConfig},
     driver::{DriverGuard, DriverMode},
@@ -18,16 +21,15 @@ use futures::stream::TryStreamExt;
 use libc;
 use rtnetlink::{new_connection, Error};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::thread;
+use std::{collections::HashMap, str::FromStr};
 use sysinfo::{CpuExt, CpuRefreshKind, NetworkData, NetworkExt, RefreshKind, System, SystemExt};
 use tokio::sync::Mutex;
 use tower_http::cors::CorsLayer;
-use uuid::Uuid;
-
 use tracing::{debug, error, info, warn, Level};
+use uuid::Uuid;
 
 const SPI_INTERFACE: &str = "/dev/spidev0.0";
 
@@ -77,31 +79,10 @@ struct Cli {
     verbose: u8,
 }
 
-enum Attack {
-    SNIFF,
-    DNS,
-}
-
-impl Attack {
-    pub fn from(mode: &str) -> Result<Attack, ()> {
-        match mode {
-            "sniff" => Ok(Attack::SNIFF),
-            "dns" => Ok(Attack::DNS),
-            _ => Err(()),
-        }
-    }
-}
-
 #[derive(Clone)]
 struct EthInterfaces(String, String);
 
-/*
-struct DnsAttack {
-    workers: Vec<String>,
-}
-
-type Attacks = ();
-*/
+type Attacks = Arc<DashMap<Uuid, Mutex<Box<dyn Attack + Send>>>>;
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() {
@@ -172,17 +153,23 @@ async fn main() {
         .expect("failed to set promiscuous mode");
 
     // Create a map to store the state of the backend dns attacks
-    //let mut dns_attacks: HashMap<String,DnsAttack>= HashMap::new();
+    let attacks: Attacks = Arc::new(DashMap::new());
+    attacks.insert(
+        Uuid::from_str("a428e5e2-a7b3-4c6d-adef-bab09c8307d5").unwrap(),
+        Mutex::new(Box::new(Sniff { test: 0 })),
+    );
 
     //
     for device in pcap::Device::list().expect("device lookup failed") {
         println!("Found device! {:?}", device);
     }
 
+    /*
     let iface = eth_interfaces.clone();
     thread::spawn(move || {
         dns_sniff::sniff(iface.0.as_str());
     });
+    */
 
     // build our application with a route
     let app = Router::new()
@@ -196,9 +183,14 @@ async fn main() {
             "/attack/:id",
             get(get_attack_handler).delete(delete_attack_handler),
         )
+        .route(
+            "/logs/:id",
+            get(get_logs_handler).delete(delete_logs_handler),
+        )
         .layer(CorsLayer::very_permissive())
         .layer(Extension(driver_guard))
         .layer(Extension(eth_interfaces))
+        .layer(Extension(attacks))
         .layer(Extension(sys_info_guard));
 
     let addr = SocketAddr::from((API_ADDRESS, API_PORT));
@@ -469,5 +461,22 @@ async fn get_attack_handler(Path(id): Path<Uuid>) -> impl IntoResponse {
 }
 #[axum::debug_handler]
 async fn delete_attack_handler(Path(id): Path<Uuid>) -> impl IntoResponse {
+    StatusCode::OK
+}
+
+#[axum::debug_handler]
+async fn get_logs_handler(
+    Path(id): Path<Uuid>,
+    Extension(attacks): Extension<Attacks>,
+) -> impl IntoResponse {
+    if let Some(attack_guard) = attacks.get(&id) {
+        let attack = attack_guard.lock().await;
+        (StatusCode::OK, Json(attack.get_logs())).into_response()
+    } else {
+        StatusCode::BAD_REQUEST.into_response()
+    }
+}
+#[axum::debug_handler]
+async fn delete_logs_handler(Path(id): Path<Uuid>) -> impl IntoResponse {
     StatusCode::OK
 }
