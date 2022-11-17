@@ -154,10 +154,12 @@ async fn main() {
 
     // Create a map to store the state of the backend dns attacks
     let attacks: Attacks = Arc::new(DashMap::new());
+    /*
     attacks.insert(
         Uuid::from_str("a428e5e2-a7b3-4c6d-adef-bab09c8307d5").unwrap(),
         Mutex::new(Box::new(Sniff { test: 0 })),
     );
+    */
 
     //
     for device in pcap::Device::list().expect("device lookup failed") {
@@ -179,14 +181,12 @@ async fn main() {
         .route("/networking", get(get_networking))
         .route("/info", get(get_device_info))
         .route("/attack", post(create_attack_handler))
+        .route("/attacks", get(get_attack_ids_handler))
         .route(
             "/attack/:id",
             get(get_attack_handler).delete(delete_attack_handler),
         )
-        .route(
-            "/logs/:id",
-            get(get_logs_handler).delete(delete_logs_handler),
-        )
+        .route("/logs/:id", get(get_logs_handler))
         .layer(CorsLayer::very_permissive())
         .layer(Extension(driver_guard))
         .layer(Extension(eth_interfaces))
@@ -425,7 +425,7 @@ struct SniffAttackConfig {}
 #[derive(Deserialize, Debug)]
 #[serde(tag = "type", rename_all = "camelCase")]
 enum CreateAttack {
-    Dns { config: DnsAttackConfig },
+    //Dns { config: DnsAttackConfig },
     Sniff { config: SniffAttackConfig },
 }
 
@@ -435,33 +435,68 @@ struct CreateAttackResponse {
 }
 
 #[axum::debug_handler]
-async fn create_attack_handler(Json(payload): Json<CreateAttack>) -> impl IntoResponse {
-    match create_attack(payload) {
+async fn create_attack_handler(
+    Json(payload): Json<CreateAttack>,
+    Extension(attacks): Extension<Attacks>,
+    Extension(interfaces): Extension<EthInterfaces>,
+) -> impl IntoResponse {
+    match create_attack(payload, attacks, interfaces) {
         Ok(id) => (StatusCode::CREATED, Json(CreateAttackResponse { id })).into_response(),
         Err(()) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
 }
-fn create_attack(attack: CreateAttack) -> Result<Uuid, ()> {
-    debug!("Attempting to create new attack {:?}", attack);
-    match attack {
-        CreateAttack::Dns { .. } => {
-            info!("creating DNS attack");
-            Ok(Uuid::new_v4())
-        }
-        CreateAttack::Sniff { .. } => {
+fn create_attack(
+    new_attack: CreateAttack,
+    attacks: Attacks,
+    interfaces: EthInterfaces,
+) -> Result<Uuid, ()> {
+    debug!("Attempting to create new attack {:?}", new_attack);
+    let uuid = Uuid::new_v4();
+    let mut attack = match new_attack {
+        CreateAttack::Sniff { config } => {
             info!("creating sniff attack");
-            Ok(Uuid::new_v4())
+            Box::new(Sniff {
+                interface1: interfaces.0,
+                interface2: interfaces.1,
+                concurrency: 2,
+                tasks: vec![],
+            })
         }
-    }
+    };
+    attack.start();
+    attacks.insert(uuid, Mutex::new(attack));
+    Ok(uuid)
 }
 
+#[axum::debug_handler]
+async fn get_attack_ids_handler(
+    Path(id): Path<Uuid>,
+    Extension(attacks): Extension<Attacks>,
+) -> impl IntoResponse {
+    StatusCode::OK
+}
 #[axum::debug_handler]
 async fn get_attack_handler(Path(id): Path<Uuid>) -> impl IntoResponse {
     StatusCode::OK
 }
 #[axum::debug_handler]
-async fn delete_attack_handler(Path(id): Path<Uuid>) -> impl IntoResponse {
-    StatusCode::OK
+async fn delete_attack_handler(
+    Path(id): Path<Uuid>,
+    Extension(attacks): Extension<Attacks>,
+) -> impl IntoResponse {
+    match delete_attack(id, attacks).await {
+        Ok(()) => StatusCode::OK,
+        Err(()) => StatusCode::NOT_FOUND,
+    }
+}
+async fn delete_attack(id: Uuid, attacks: Attacks) -> Result<(), ()> {
+    if let Some((_, attack_guard)) = attacks.remove(&id) {
+        let mut attack = attack_guard.lock().await;
+        attack.stop();
+        Ok(())
+    } else {
+        Err(())
+    }
 }
 
 #[axum::debug_handler]
@@ -475,8 +510,4 @@ async fn get_logs_handler(
     } else {
         StatusCode::BAD_REQUEST.into_response()
     }
-}
-#[axum::debug_handler]
-async fn delete_logs_handler(Path(id): Path<Uuid>) -> impl IntoResponse {
-    StatusCode::OK
 }

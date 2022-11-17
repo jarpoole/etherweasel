@@ -1,3 +1,5 @@
+use std::thread::sleep_ms;
+
 use super::attack::Attack;
 
 use dns_parser::Packet;
@@ -6,29 +8,40 @@ use nom::IResult;
 use pcap::Capture;
 use pktparse::{ethernet, ip, ipv4, udp};
 use serde::Serialize;
-use std::thread::JoinHandle;
+use tokio::task;
+use tokio::task::JoinHandle;
+use tracing::info;
 
-pub struct Sniff<T> {
-    //tasks: Vec<JoinHandle<T>>,
-    pub test: T,
+pub struct Sniff {
+    pub interface1: String,
+    pub interface2: String,
+    pub concurrency: u8,
+    pub tasks: Vec<JoinHandle<()>>,
 }
+
 #[derive(Serialize)]
 struct SniffedPacket {
     foo: u32,
 }
 
-impl<T> Attack for Sniff<T> {
+impl Attack for Sniff {
     fn get_logs(&self) -> Vec<Box<dyn ErasedSerialize>> {
         vec![Box::new(SniffedPacket { foo: 0 })]
     }
-}
 
-/*
-impl<T> Attack for Sniff<T> {
-    fn get_logs(&self) -> Vec<Box<dyn ErasedSerialize>> {
-        vec![Box::new(SniffedPacket { foo: 0 })]
-    }
-    fn start(interface_name: &str) {
+    fn start(&mut self) {
+        for _ in 0..self.concurrency {
+            self.tasks.push(task::spawn(async {
+                let mut x = 0;
+                loop {
+                    info!("{}", x);
+                    x += 1;
+                    sleep_ms(1000);
+                }
+            }));
+        }
+        ()
+        /*
         println!("Listening on interface {}", interface_name);
         let mut cap = Capture::from_device(interface_name)
             .unwrap()
@@ -56,9 +69,17 @@ impl<T> Attack for Sniff<T> {
             }
         }
         ()
+        */
+    }
+    fn stop(&mut self) {
+        for task in self.tasks.iter() {
+            task.abort();
+        }
+        self.tasks.clear();
     }
 }
 
+/*
 //extern crate af_packet;
 //extern crate dns_parser;
 //extern crate nom;
