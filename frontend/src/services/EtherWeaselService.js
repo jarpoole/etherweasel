@@ -1,6 +1,6 @@
 class EtherWeaselService {
   static get url() {
-    return "http://172.17.0.1:3000/";
+    return process.env.REACT_APP_ETHERWEASEL_ENDPOINT;
   }
 
   static get deviceModes() {
@@ -8,6 +8,14 @@ class EtherWeaselService {
       DISCONNECTED: "DISCONNECTED",
       ACTIVE: "ACTIVE",
       PASSIVE: "PASSIVE",
+    };
+  }
+
+  static get hostStatuses() {
+    return {
+      UNKNOWN: "UNKNOWN",
+      CONNECTED: "CONNECTED",
+      DISCONNECTED: "DISCONNECTED",
     };
   }
 
@@ -19,6 +27,28 @@ class EtherWeaselService {
       return mode;
     } catch (error) {
       return EtherWeaselService.deviceModes.DISCONNECTED;
+    }
+  }
+
+  static async fetchNetworkData() {
+    try {
+      let response = await fetch(EtherWeaselService.url + "networking");
+      let networkingData = await response.json();
+
+      return networkingData;
+    } catch (error) {
+      return undefined;
+    }
+  }
+
+  static async fetchDeviceInformation() {
+    try {
+      let response = await fetch(EtherWeaselService.url + "info");
+      let information = await response.json();
+
+      return information;
+    } catch (error) {
+      return undefined;
     }
   }
 

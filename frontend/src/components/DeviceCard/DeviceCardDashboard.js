@@ -11,26 +11,26 @@ class DeviceCardDashboard extends React.Component {
     return (
       <Grid item xs={12}>
         <Paper elevation={1} className="paperPadding">
-          <Grid container spacing={10}>
+          <Grid container spacing={10} alignItems="stretch">
             <Grid item xs={4}>
               <HostCard
                 title={"Host A"}
-                isConnected={true}
-                ip={"192.168.0.2"}
+                hostStatus={this.props.aliceIsConnected}
+                macAddress={this.props.aliceMacAddress}
               />
             </Grid>
             <Grid item xs={4}>
               <EtherWeaselCard
                 title={"Ether-Weasel"}
                 deviceMode={this.props.deviceMode}
-                name={"rpi"}
+                name={this.props.deviceName}
               />
             </Grid>
             <Grid item xs={4}>
               <HostCard
                 title={"Host B"}
-                isConnected={false}
-                ip={"192.168.0.3"}
+                hostStatus={this.props.bobIsConnected}
+                macAddress={this.props.bobMacAddress}
               />
             </Grid>
           </Grid>

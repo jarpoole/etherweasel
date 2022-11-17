@@ -2,23 +2,25 @@ import React from "react";
 import Paper from "@mui/material/Paper";
 import { ResponsiveLine } from "@nivo/line";
 
+import Formatter from "../../services/Formatter";
+
 class LineGraph extends React.Component {
-  formatData = (data) => {
-    return data.map((y, i) => ({
-      x: i * 5,
-      y: y,
-    }));
-  };
   render() {
     return (
       <Paper elevation={1} className="paperPadding">
         <h2 className="graphTitle">{this.props.title}</h2>
         <div className="lineGraphHeight">
           <ResponsiveLine
-            data={[
-              { id: this.props.title, data: this.formatData(this.props.data) },
-            ]}
-            margin={{ top: 30, right: 30, bottom: 50, left: 50 }}
+            data={Formatter.formatDataArray(
+              this.props.data,
+              this.props.interval
+            )}
+            margin={{
+              top: 30,
+              right: 30,
+              bottom: 50,
+              left: this.props.displayPercentage ? 50 : 60,
+            }}
             xScale={{
               type: "linear",
               reverse: true,
@@ -26,10 +28,14 @@ class LineGraph extends React.Component {
             yScale={{
               type: "linear",
               min: "0",
-              max: "100",
+              max: this.props.displayPercentage ? "100" : "auto",
               reverse: false,
             }}
-            yFormat={(value) => `${value}%`}
+            yFormat={(value) =>
+              this.props.displayPercentage
+                ? `${value}%`
+                : Formatter.formatBytes(value, 2)
+            }
             curve="cardinal"
             axisTop={null}
             axisRight={null}
@@ -45,7 +51,10 @@ class LineGraph extends React.Component {
               legendPosition: "middle",
             }}
             axisLeft={{
-              format: (value) => `${value}%`,
+              format: (value) =>
+                this.props.displayPercentage
+                  ? `${value}%`
+                  : Formatter.formatBytes(value),
               orient: "left",
               tickSize: 5,
               tickPadding: 5,
@@ -70,9 +79,9 @@ class LineGraph extends React.Component {
                 anchor: "top-right",
                 direction: "row",
                 justify: false,
-                translateX: 0,
+                translateX: -10,
                 translateY: -30,
-                itemsSpacing: 0,
+                itemsSpacing: 45,
                 itemDirection: "left-to-right",
                 itemWidth: 80,
                 itemHeight: 20,
@@ -88,4 +97,5 @@ class LineGraph extends React.Component {
     );
   }
 }
+
 export default LineGraph;

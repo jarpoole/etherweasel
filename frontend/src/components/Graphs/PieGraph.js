@@ -2,6 +2,8 @@ import React from "react";
 import Paper from "@mui/material/Paper";
 import { ResponsivePie } from "@nivo/pie";
 
+import Formatter from "../../services/Formatter";
+
 class PieGraph extends React.Component {
   render() {
     return (
@@ -13,12 +15,13 @@ class PieGraph extends React.Component {
         <h2 className="graphTitle">{this.props.title}</h2>
         <div className="pieGraphHeight">
           <ResponsivePie
-            data={[
-              { id: "Used", value: this.props.data },
-              { id: "Free", value: 100 - this.props.data },
-            ]}
+            data={this.props.data}
             margin={{ top: 8, right: 30, bottom: 30, left: 30 }}
-            valueFormat={(value) => `${value.toFixed(2)}%`}
+            valueFormat={(value) =>
+              this.props.displayPercentage
+                ? `${value.toFixed(2)}%`
+                : Formatter.formatPackets(value)
+            }
             innerRadius={0.5}
             padAngle={0.7}
             cornerRadius={3}
@@ -30,7 +33,11 @@ class PieGraph extends React.Component {
               modifiers: [["darker", 0.2]],
             }}
             enableArcLinkLabels={false}
-            arcLabel={(data) => `${data.value.toFixed(0)}%`}
+            arcLabel={(data) =>
+              this.props.displayPercentage
+                ? `${data.value.toFixed(0)}%`
+                : data.value
+            }
             arcLabelsSkipAngle={45}
             arcLabelsTextColor={{
               from: "color",
