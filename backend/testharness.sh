@@ -1,5 +1,7 @@
 #!/bin/bash 
 
+cd $(dirname $0)
+
 # Determine the type of test harness to run
 if [[ -z "$1" ]]; then
     echo "Type of test not specified"
@@ -102,5 +104,5 @@ elif [[ $TESTMODE = "dns" ]]; then
     ./utils/synchronize.sh etherweasel_rs_backend_instance notify
     ./utils/synchronize.sh bob_dns_instance notify
     # Wait for results
-    docker container attach etherweasel_rs_backend_instance
+    # docker container attach etherweasel_rs_backend_instance
 fi
