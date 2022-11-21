@@ -16,7 +16,7 @@ fi
 # Start DNS query loop
 if [[ "$*" == *"dig"* ]]; then
     while true; do
-        dig @192.168.0.2 example.local
+        dig @192.168.0.2 sub1.example.local
         sleep 1;
     done
 fi

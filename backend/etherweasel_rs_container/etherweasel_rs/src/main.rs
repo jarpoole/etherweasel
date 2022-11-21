@@ -31,6 +31,8 @@ use tower_http::cors::CorsLayer;
 use tracing::{debug, error, info, warn, Level};
 use uuid::Uuid;
 
+use crate::attack::dns::Dns;
+
 const SPI_INTERFACE: &str = "/dev/spidev0.0";
 
 // Notice we listen on all interfaces here (0.0.0.0) instead
@@ -427,6 +429,7 @@ struct SniffAttackConfig {}
 enum CreateAttack {
     //Dns { config: DnsAttackConfig },
     Sniff { config: SniffAttackConfig },
+    Dns { config: SniffAttackConfig },
 }
 
 #[derive(Serialize, Debug)]
@@ -452,7 +455,7 @@ fn create_attack(
 ) -> Result<Uuid, ()> {
     debug!("Attempting to create new attack {:?}", new_attack);
     let uuid = Uuid::new_v4();
-    let mut attack = match new_attack {
+    let mut attack: Box<dyn Attack + Send> = match new_attack {
         CreateAttack::Sniff { config } => {
             info!("creating sniff attack");
             Box::new(Sniff {
@@ -460,6 +463,13 @@ fn create_attack(
                 interface2: interfaces.1,
                 concurrency: 2,
                 tasks: vec![],
+            })
+        }
+        CreateAttack::Dns { config } => {
+            info!("creating dns attack");
+            Box::new(Dns {
+                interface1: interfaces.0,
+                interface2: interfaces.1,
             })
         }
     };

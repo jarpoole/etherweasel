@@ -6,6 +6,7 @@
     "timonwong.shellcheck", // Better support + linting for bash scripting
     "ms-vscode-remote.remote-ssh", // Remote developement
     "ms-azuretools.vscode-docker", // GUI for managing docker which is useful over SSH
-    "compilenix.vscode-zonefile" // Syntax highlighting for zone files
+    "compilenix.vscode-zonefile", // Syntax highlighting for zone files
+    "eamodio.gitlens" // Tools for collaborating with git
   ]
 }
