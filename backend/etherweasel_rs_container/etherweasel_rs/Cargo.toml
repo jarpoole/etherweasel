@@ -4,28 +4,28 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-libc = "0.2.137"
-pcap = "0.11"
-tower-http = { version = "0.3.4", features = ["cors"] }
-dns-parser = "0.8.0"
-pktparse = "0.7.1"
-spidev = "0.5.1"
-rtnetlink = "0.11.0"
 async-trait = "0.1.57"
-futures = "0.3.24"
-clap = { version = "4.0", features = ["derive"] }
-sysinfo = "0.26.5"
-nom = "7.1.1"
-uuid = { version = "1.2.1", features = ["v4", "serde"] }
-dashmap = "5.4.0"
-# Tokio
-tokio = { version = "1", features = ["full"] }
 axum = { version = "0.5.16", features = ["macros"] }
+clap = { version = "4.0", features = ["derive"] }
+dashmap = "5.4.0"
+erased-serde = "0.3.23"
+futures = "0.3.24"
+libc = "0.2.137"
+nom = "7.1.1"
+pcap = "0.11"
+pnet = "0.31.0"
+rtnetlink = "0.11.0"
+rustdns = "0.4.0"
+spidev = "0.5.1"
+sysinfo = "0.26.5"
+serde = { version = "1.0.138", features = ["derive"] }
+tokio = { version = "1", features = ["full"] }
+tower-http = { version = "0.3.4", features = ["cors"] }
 tracing = "0.1.36"
 tracing-subscriber = "0.3.15"
-serde = { version = "1.0.138", features = ["derive"] }
-erased-serde = "0.3.23"
-# Extras
+uuid = { version = "1.2.1", features = ["v4", "serde"] }
+#dns-parser = "0.8.0"
+#pktparse = "0.7.1"
 #socket2 = "0.4.7"
 #bytes = "1"
 

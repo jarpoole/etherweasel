@@ -2,11 +2,11 @@ use std::thread::sleep_ms;
 
 use super::attack::Attack;
 
-use dns_parser::Packet;
+//use dns_parser::Packet;
 use erased_serde::Serialize as ErasedSerialize;
 use nom::IResult;
 use pcap::Capture;
-use pktparse::{ethernet, ip, ipv4, udp};
+//use pktparse::{ethernet, ip, ipv4, udp};
 use serde::Serialize;
 use tokio::task;
 use tokio::task::JoinHandle;

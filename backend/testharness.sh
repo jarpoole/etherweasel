@@ -11,11 +11,14 @@ TESTMODE=$1
 shift
 
 # Parse out options if any
+INTERACTIVE=false
 MODE=passive
 CPU_LIMIT=1
 MEMORY_LIMIT=1g
 while [[ -n $1 ]]; do
     case $1 in 
+        -i | --interactive ) INTERACTIVE=true; shift
+        ;;
         --cpus=* ) CPU_LIMIT="${1#*=}"; 
         ;;
         --memory=* ) MEMORY_LIMIT="${1#*=}";
@@ -104,5 +107,7 @@ elif [[ $TESTMODE = "dns" ]]; then
     ./utils/synchronize.sh etherweasel_rs_backend_instance notify
     ./utils/synchronize.sh bob_dns_instance notify
     # Wait for results
-    # docker container attach etherweasel_rs_backend_instance
+    if [[ "$INTERACTIVE" = true ]]; then
+      docker container attach etherweasel_rs_backend_instance
+    fi
 fi
