@@ -8,14 +8,15 @@ async-trait = "0.1.57"
 axum = { version = "0.5.16", features = ["macros"] }
 clap = { version = "4.0", features = ["derive"] }
 dashmap = "5.4.0"
+dns-message-parser = "0.7.0"
 erased-serde = "0.3.23"
 futures = "0.3.24"
 libc = "0.2.137"
 nom = "7.1.1"
 pcap = "0.11"
 pnet = "0.31.0"
+pnet_datalink = "0.31.0"
 rtnetlink = "0.11.0"
-rustdns = "0.4.0"
 spidev = "0.5.1"
 sysinfo = "0.26.5"
 serde = { version = "1.0.138", features = ["derive"] }
