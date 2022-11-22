@@ -468,8 +468,8 @@ fn create_attack(
         CreateAttack::Dns { config } => {
             info!("creating dns attack");
             Box::new(Dns {
-                interface1: interfaces.0,
-                interface2: interfaces.1,
+                interface1_name: interfaces.0,
+                interface2_name: interfaces.1,
             })
         }
     };
