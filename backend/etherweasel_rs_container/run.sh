@@ -26,6 +26,7 @@ fi
 
 # Parse arguments
 INTERACTIVE=false
+TRACE=0
 CPU_LIMIT=2
 MEMORY_LIMIT=1g
 PASSWORD=password
@@ -33,6 +34,8 @@ HOST=jarpoole@192.168.100.15
 while [[ -n $1 ]]; do
     case $1 in 
         -i | --interactive ) INTERACTIVE=true; shift
+        ;;
+        -t | --trace ) TRACE=1; shift
         ;;
         --cpus=* ) CPU_LIMIT="${1#*=}"; shift 
         ;;
