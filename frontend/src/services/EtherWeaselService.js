@@ -19,7 +19,7 @@ class EtherWeaselService {
     };
   }
 
-  static async fetchDeviceStatus() {
+  static async getDeviceStatus() {
     try {
       let response = await fetch(EtherWeaselService.url + "mode");
       let mode = await response.json();
@@ -29,8 +29,25 @@ class EtherWeaselService {
       return EtherWeaselService.deviceModes.DISCONNECTED;
     }
   }
+  // TODO: attach attack passive switching
+  static async postDeviceStatus(body) {
+    try {
+      let response = await fetch(EtherWeaselService.url + "mode", {
+        method: "POST",
+        body: body,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-  static async fetchNetworkData() {
+      let responseJson = await response.json();
+      return responseJson;
+    } catch (error) {
+      return undefined;
+    }
+  }
+
+  static async getNetworkData() {
     try {
       let response = await fetch(EtherWeaselService.url + "networking");
       let networkingData = await response.json();
@@ -41,7 +58,7 @@ class EtherWeaselService {
     }
   }
 
-  static async fetchDeviceInformation() {
+  static async getDeviceInformation() {
     try {
       let response = await fetch(EtherWeaselService.url + "info");
       let information = await response.json();
@@ -52,12 +69,29 @@ class EtherWeaselService {
     }
   }
 
-  static async fetchDevicePerformance() {
+  static async getDevicePerformance() {
     try {
       let response = await fetch(EtherWeaselService.url + "performance");
       let performance = await response.json();
 
       return performance;
+    } catch (error) {
+      return undefined;
+    }
+  }
+
+  static async postAttack(body) {
+    try {
+      let response = await fetch(EtherWeaselService.url + "attack", {
+        method: "POST",
+        body: body,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      let responseJson = await response.json();
+      return responseJson;
     } catch (error) {
       return undefined;
     }
