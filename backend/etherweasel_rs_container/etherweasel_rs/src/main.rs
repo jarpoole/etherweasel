@@ -470,6 +470,8 @@ fn create_attack(
             Box::new(Dns {
                 interface1_name: interfaces.0,
                 interface2_name: interfaces.1,
+                stop_channel: None,
+                logs: vec![],
             })
         }
     };
@@ -479,12 +481,13 @@ fn create_attack(
 }
 
 #[axum::debug_handler]
-async fn get_attack_ids_handler(
-    Path(id): Path<Uuid>,
-    Extension(attacks): Extension<Attacks>,
-) -> impl IntoResponse {
-    StatusCode::OK
+async fn get_attack_ids_handler(Extension(attacks): Extension<Attacks>) -> impl IntoResponse {
+    (StatusCode::OK, Json(get_attack_ids(attacks)))
 }
+fn get_attack_ids(attacks: Attacks) -> Vec<Uuid> {
+    attacks.iter().map(|el| el.key().to_owned()).collect()
+}
+
 #[axum::debug_handler]
 async fn get_attack_handler(Path(id): Path<Uuid>) -> impl IntoResponse {
     StatusCode::OK
@@ -502,11 +505,9 @@ async fn delete_attack_handler(
 async fn delete_attack(id: Uuid, attacks: Attacks) -> Result<(), ()> {
     if let Some((_, attack_guard)) = attacks.remove(&id) {
         let mut attack = attack_guard.lock().await;
-        attack.stop();
-        Ok(())
-    } else {
-        Err(())
+        attack.stop().unwrap_or(())
     }
+    Err(())
 }
 
 #[axum::debug_handler]
@@ -516,7 +517,8 @@ async fn get_logs_handler(
 ) -> impl IntoResponse {
     if let Some(attack_guard) = attacks.get(&id) {
         let attack = attack_guard.lock().await;
-        (StatusCode::OK, Json(attack.get_logs())).into_response()
+        let logs = attack.get_logs().await;
+        (StatusCode::OK, Json(logs)).into_response()
     } else {
         StatusCode::BAD_REQUEST.into_response()
     }
