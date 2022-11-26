@@ -84,7 +84,7 @@ struct Cli {
 #[derive(Clone)]
 struct EthInterfaces(String, String);
 
-type Attacks = Arc<DashMap<Uuid, Mutex<Box<dyn Attack + Send>>>>;
+type Attacks = Arc<DashMap<Uuid, Mutex<Box<dyn Attack + Send + Sync>>>>;
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() {
@@ -147,12 +147,14 @@ async fn main() {
     )));
 
     // Configure interfaces
+    /*
     set_promiscuous(eth_interfaces.0.as_str())
         .await
         .expect("failed to set promiscuous mode");
     set_promiscuous(eth_interfaces.1.as_str())
         .await
         .expect("failed to set promiscuous mode");
+        */
 
     // Create a map to store the state of the backend dns attacks
     let attacks: Attacks = Arc::new(DashMap::new());
@@ -455,7 +457,7 @@ fn create_attack(
 ) -> Result<Uuid, ()> {
     debug!("Attempting to create new attack {:?}", new_attack);
     let uuid = Uuid::new_v4();
-    let mut attack: Box<dyn Attack + Send> = match new_attack {
+    let mut attack: Box<dyn Attack + Send + Sync> = match new_attack {
         CreateAttack::Sniff { config } => {
             info!("creating sniff attack");
             Box::new(Sniff {
@@ -470,8 +472,7 @@ fn create_attack(
             Box::new(Dns {
                 interface1_name: interfaces.0,
                 interface2_name: interfaces.1,
-                stop_channel: None,
-                logs: vec![],
+                ..Default::default()
             })
         }
     };
@@ -515,11 +516,17 @@ async fn get_logs_handler(
     Path(id): Path<Uuid>,
     Extension(attacks): Extension<Attacks>,
 ) -> impl IntoResponse {
+    match get_logs(id, attacks).await {
+        Ok(logs) => (StatusCode::OK, Json(logs)).into_response(),
+        Err(_) => StatusCode::BAD_REQUEST.into_response(),
+    }
+}
+
+async fn get_logs(id: Uuid, attacks: Attacks) -> Result<Vec<Box<dyn erased_serde::Serialize>>, ()> {
     if let Some(attack_guard) = attacks.get(&id) {
         let attack = attack_guard.lock().await;
-        let logs = attack.get_logs().await;
-        (StatusCode::OK, Json(logs)).into_response()
+        Ok(attack.get_logs())
     } else {
-        StatusCode::BAD_REQUEST.into_response()
+        Err(())
     }
 }

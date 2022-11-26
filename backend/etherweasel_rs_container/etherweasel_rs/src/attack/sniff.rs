@@ -27,7 +27,7 @@ struct SniffedPacket {
 
 #[async_trait]
 impl Attack for Sniff {
-    async fn get_logs(&self) -> Vec<Box<dyn ErasedSerialize>> {
+    fn get_logs(&self) -> Vec<Box<dyn ErasedSerialize>> {
         vec![Box::new(SniffedPacket { foo: 0 })]
     }
 

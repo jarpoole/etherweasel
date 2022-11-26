@@ -9,12 +9,15 @@ use pnet::packet::MutablePacket;
 use pnet_datalink::Channel::Ethernet;
 use pnet_datalink::{self, Config, DataLinkReceiver, DataLinkSender, NetworkInterface};
 use serde::Serialize;
+use std::default;
 use std::net::Ipv4Addr;
 use std::time::Duration;
 use tokio::task::spawn_blocking;
 use tracing::{debug, error, info};
 use tokio::sync::{Mutex,broadcast::{self, Receiver, Sender}};
 use async_trait::async_trait;
+use append_only_vec::AppendOnlyVec;
+use std::sync::Arc;
 
 use super::attack::Attack;
 use pnet::packet::{
@@ -29,11 +32,21 @@ pub struct Dns {
     pub interface1_name: String,
     pub interface2_name: String,
     pub stop_channel: Option<Sender<bool>>,
-    pub logs: Mutex<Vec<Box<DnsPacket>>>,
+    pub logs: Arc<AppendOnlyVec<DnsPacket>>,
 }
 
-#[derive(Serialize)]
-struct DnsPacket {
+impl Default for Dns {
+    fn default() -> Self {
+        Dns { 
+            interface1_name: String::new(), 
+            interface2_name: String::new(),
+            stop_channel: None,logs: Arc::new(AppendOnlyVec::<DnsPacket>::new())
+        }
+    }
+}
+
+#[derive(Serialize, Clone)]
+pub struct DnsPacket {
     port: u16,
 }
 
@@ -41,15 +54,14 @@ const INTERFACE_READ_TIMEOUT_MS: u64 = 1;
 
 #[async_trait]
 impl Attack for Dns {
-    async fn get_logs(&self) -> Vec<Box<dyn ErasedSerialize>> {
-        // *self.logs.lock().await
-        vec![Box::new(DnsPacket { port: 0 })]
+    fn get_logs(&self) -> Vec<Box<dyn erased_serde::Serialize>> {
+        self.logs.iter().cloned().map(|x|Box::new(x) as Box<dyn erased_serde::Serialize >).collect()
     }
     fn start(&mut self) {
         let modifier = |mut rx_channel: Box<dyn DataLinkReceiver>,
                         mut tx_channel: Box<dyn DataLinkSender>, 
-                        mut stop_channel: Receiver<bool> | {
-            //let modifier = |rx_interface_name: String, tx_interface_name: String| {
+                        mut stop_channel: Receiver<bool>,
+                        logs: Arc<AppendOnlyVec<DnsPacket>>| {
             move || {
                 info!("started DNS modification attack worker thread");
 
@@ -167,6 +179,8 @@ impl Attack for Dns {
                                         }
                                     }
                                 }
+                                info!("adding log entry");
+                                logs.push(DnsPacket{port: 0});
 
                                 info!("{:?}", tx_ethernet_frame);
                                 info!("{:02x?}", tx_ethernet_frame.packet());
@@ -180,6 +194,8 @@ impl Attack for Dns {
                 }
             }
         };
+        info!("{}", self.interface1_name);
+        info!("{}", self.interface2_name);
         let interface1 = pnet_datalink::interfaces()
             .into_iter()
             .filter(|iface: &NetworkInterface| iface.name == self.interface1_name)
@@ -214,9 +230,9 @@ impl Attack for Dns {
         };
         let (tx_stop_channel, rx_stop_channel1) = broadcast::channel::<bool>(1);
         let rx_stop_channel2 = tx_stop_channel.subscribe();
-        spawn_blocking(modifier(rx_channel1, tx_channel2, rx_stop_channel1));
-        spawn_blocking(modifier(rx_channel2, tx_channel1, rx_stop_channel2));
         self.stop_channel = Some(tx_stop_channel);
+        spawn_blocking(modifier(rx_channel1, tx_channel2, rx_stop_channel1, self.logs.clone()));
+        spawn_blocking(modifier(rx_channel2, tx_channel1, rx_stop_channel2, self.logs.clone()));
         ()
     }
     fn stop(&mut self) -> Result<(), Box<dyn std::error::Error>>{
