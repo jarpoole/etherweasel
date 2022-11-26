@@ -85,13 +85,9 @@ class LogTable extends React.Component {
           <TableContainer
             component={Paper}
             sx={{
-              height: 300,
               width: "100%",
-              boxShadow: "none",
-              borderStyle: "solid",
-              borderWidth: 1,
-              borderColor: "rgba(224, 224, 224, 1)",
             }}
+            className="paperTable"
           >
             <Table
               stickyHeader

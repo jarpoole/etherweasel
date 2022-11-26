@@ -37,3 +37,16 @@ code {
   margin-bottom: 15px;
   font-size: 1.25rem;
 }
+
+.paperTable {
+  height: 300px;
+  box-shadow: none !important;
+  border-style: solid;
+  border-width: 1px;
+  border-color: rgba(224, 224, 224, 1);
+}
+
+.paperTableModificationCell {
+  top: 50px !important;
+  background-color: #eef2f6 !important;
+}

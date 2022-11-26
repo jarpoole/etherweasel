@@ -15,7 +15,43 @@ import AddCircleIcon from "@mui/icons-material/AddCircle";
 
 import EtherWeaselService from "../../services/EtherWeaselService";
 
-class DNS extends React.Component {
+const cols = [
+  {
+    name: "ID",
+    type: "String",
+    inputType: "TextField",
+    disabled: true,
+  },
+  {
+    name: "Test String",
+    type: "String",
+    inputType: "TextField",
+    disabled: false,
+  },
+  {
+    name: "Test String",
+    type: "String",
+    inputType: "TextField",
+    disabled: true,
+  },
+  {
+    name: "Test Number",
+    type: "Number",
+    inputType: "TextField",
+    disabled: false,
+  },
+  {
+    name: "Status",
+    type: "String",
+  },
+  {
+    name: "",
+    type: "Button",
+    inputType: "Button",
+  },
+];
+
+class ModificationsTable extends React.Component {
   constructor(props) {
     super(props);
     // Mock Data
@@ -88,97 +124,76 @@ class DNS extends React.Component {
     };
   }
 
+  createInputComponent = (col) => {
+    if (col.inputType === "TextField") {
+      return (
+        <TextField
+          id="outlined-basic"
+          label={col.name}
+          variant="outlined"
+          disabled={col.disabled ? true : false}
+          size="small"
+          fullWidth
+          inputProps={{ sx: { fontSize: "0.875rem" } }}
+          InputLabelProps={{ sx: { fontSize: "0.875rem" } }}
+          sx={{ backgroundColor: "#ffffff" }}
+        />
+      );
+    } else if (col.inputType === "Button") {
+      return (
+        <IconButton
+          onClick={async () => {
+            let response = await EtherWeaselService.postAttack(
+              JSON.stringify({
+                type: "dns",
+                config: {},
+              })
+            );
+            if (response) {
+              let newRows = this.state.rows;
+              newRows.unshift({
+                id: response.id,
+                firstName: "Operation Successful",
+              });
+              this.setState({
+                rows: newRows,
+              });
+            }
+          }}
+        >
+          <AddCircleIcon />
+        </IconButton>
+      );
+    }
+  };
+
   render() {
     return (
       <Grid item xs={12}>
         <Paper elevation={1} className="paperPadding">
           <h2 className="paperTitle">Modifications</h2>
-          <TableContainer
-            component={Paper}
-            sx={{
-              height: 300,
-              width: "100%",
-              boxShadow: "none",
-              borderStyle: "solid",
-              borderWidth: 1,
-              borderColor: "rgba(224, 224, 224, 1)",
-            }}
-          >
+          <TableContainer component={Paper} className="paperTable">
             <Table stickyHeader size="small">
               <TableHead>
                 <TableRow sx={{ height: "50px" }}>
-                  <TableCell className="logHeader">ID</TableCell>
-                  <TableCell>First Name</TableCell>
-                  <TableCell>Last Name</TableCell>
-                  <TableCell align="right">Age</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell></TableCell>
+                  {cols.map((col) => {
+                    return (
+                      <TableCell
+                        align={col.type === "Number" ? "right" : "left"}
+                      >
+                        {col.name}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
-                <TableRow
-                  sx={{
-                    height: "70px",
-                  }}
-                >
-                  <TableCell className="logHeader" style={{ top: 50 }}>
-                    <TextField
-                      id="outlined-basic"
-                      label="ID"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                    />
-                  </TableCell>
-                  <TableCell style={{ top: 50 }}>
-                    <TextField
-                      id="outlined-basic"
-                      label="First Name"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                    />
-                  </TableCell>
-                  <TableCell style={{ top: 50 }}>
-                    <TextField
-                      id="outlined-basic"
-                      label="Last Name"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                    />
-                  </TableCell>
-                  <TableCell align="right" style={{ top: 50 }}>
-                    <TextField
-                      id="outlined-basic"
-                      label="Age"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                    />
-                  </TableCell>
-                  <TableCell style={{ top: 50 }}></TableCell>
-                  <TableCell style={{ top: 50 }}>
-                    <IconButton
-                      onClick={async () => {
-                        let response = await EtherWeaselService.postAttack(
-                          JSON.stringify({
-                            type: "dns",
-                            config: {},
-                          })
-                        );
-                        if (response) {
-                          let newRows = this.state.rows;
-                          newRows.unshift({
-                            id: "Operation Successful",
-                          });
-                          this.setState({
-                            rows: newRows,
-                          });
-                        }
-                      }}
-                    >
-                      <AddCircleIcon />
-                    </IconButton>
-                  </TableCell>
+                <TableRow sx={{ height: "50px" }}>
+                  {cols.map((col) => {
+                    return (
+                      <TableCell className="paperTableModificationCell">
+                        {this.createInputComponent(col)}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -211,4 +226,4 @@ class DNS extends React.Component {
   }
 }
 
-export default DNS;
+export default ModificationsTable;
