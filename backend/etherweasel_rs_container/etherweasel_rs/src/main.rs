@@ -1,6 +1,7 @@
 mod attack;
 mod driver;
 
+use addr::parse_dns_name;
 use attack::{attack::Attack, sniff::Sniff};
 use axum::{
     extract::Path,
@@ -20,11 +21,10 @@ use driver::{
 use futures::stream::TryStreamExt;
 use libc;
 use rtnetlink::{new_connection, Error};
-use serde::{Deserialize, Serialize};
-use std::net::SocketAddr;
+use serde::{de::Error as DeError, Deserialize, Deserializer, Serialize};
+use std::collections::HashMap;
+use std::net::{Ipv4Addr, SocketAddr};
 use std::sync::Arc;
-use std::thread;
-use std::{collections::HashMap, str::FromStr};
 use sysinfo::{CpuExt, CpuRefreshKind, NetworkData, NetworkExt, RefreshKind, System, SystemExt};
 use tokio::sync::Mutex;
 use tower_http::cors::CorsLayer;
@@ -84,7 +84,7 @@ struct Cli {
 #[derive(Clone)]
 struct EthInterfaces(String, String);
 
-type Attacks = Arc<DashMap<Uuid, Mutex<Box<dyn Attack + Send>>>>;
+type Attacks = Arc<DashMap<Uuid, Mutex<Box<dyn Attack + Send + Sync>>>>;
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() {
@@ -418,9 +418,23 @@ async fn is_up(interface: &str) -> Result<bool, Error> {
 
 #[derive(Deserialize, Debug)]
 struct DnsAttackConfig {
-    domain: String,
-    replacement: String,
+    #[serde(deserialize_with = "validate_fqdn")]
+    fqdn: String,
+    ip: Ipv4Addr,
 }
+
+fn validate_fqdn<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let string: String = Deserialize::deserialize(deserializer)?;
+    info!("here");
+    match parse_dns_name(&string) {
+        Ok(addr) => Ok(addr.as_str().to_owned()),
+        Err(_) => Err(DeError::custom("Invalid FQDN")),
+    }
+}
+
 #[derive(Deserialize, Debug)]
 struct SniffAttackConfig {}
 
@@ -429,7 +443,7 @@ struct SniffAttackConfig {}
 enum CreateAttack {
     //Dns { config: DnsAttackConfig },
     Sniff { config: SniffAttackConfig },
-    Dns { config: SniffAttackConfig },
+    Dns { config: DnsAttackConfig },
 }
 
 #[derive(Serialize, Debug)]
@@ -455,7 +469,7 @@ fn create_attack(
 ) -> Result<Uuid, ()> {
     debug!("Attempting to create new attack {:?}", new_attack);
     let uuid = Uuid::new_v4();
-    let mut attack: Box<dyn Attack + Send> = match new_attack {
+    let mut attack: Box<dyn Attack + Send + Sync> = match new_attack {
         CreateAttack::Sniff { config } => {
             info!("creating sniff attack");
             Box::new(Sniff {
@@ -470,6 +484,9 @@ fn create_attack(
             Box::new(Dns {
                 interface1_name: interfaces.0,
                 interface2_name: interfaces.1,
+                domain_name: config.fqdn.to_string(),
+                ip_address: config.ip,
+                ..Default::default()
             })
         }
     };
@@ -479,12 +496,13 @@ fn create_attack(
 }
 
 #[axum::debug_handler]
-async fn get_attack_ids_handler(
-    Path(id): Path<Uuid>,
-    Extension(attacks): Extension<Attacks>,
-) -> impl IntoResponse {
-    StatusCode::OK
+async fn get_attack_ids_handler(Extension(attacks): Extension<Attacks>) -> impl IntoResponse {
+    (StatusCode::OK, Json(get_attack_ids(attacks)))
 }
+fn get_attack_ids(attacks: Attacks) -> Vec<Uuid> {
+    attacks.iter().map(|el| el.key().to_owned()).collect()
+}
+
 #[axum::debug_handler]
 async fn get_attack_handler(Path(id): Path<Uuid>) -> impl IntoResponse {
     StatusCode::OK
@@ -502,11 +520,9 @@ async fn delete_attack_handler(
 async fn delete_attack(id: Uuid, attacks: Attacks) -> Result<(), ()> {
     if let Some((_, attack_guard)) = attacks.remove(&id) {
         let mut attack = attack_guard.lock().await;
-        attack.stop();
-        Ok(())
-    } else {
-        Err(())
+        attack.stop().unwrap_or(())
     }
+    Err(())
 }
 
 #[axum::debug_handler]
@@ -514,10 +530,17 @@ async fn get_logs_handler(
     Path(id): Path<Uuid>,
     Extension(attacks): Extension<Attacks>,
 ) -> impl IntoResponse {
+    match get_logs(id, attacks).await {
+        Ok(logs) => (StatusCode::OK, Json(logs)).into_response(),
+        Err(_) => StatusCode::BAD_REQUEST.into_response(),
+    }
+}
+
+async fn get_logs(id: Uuid, attacks: Attacks) -> Result<Vec<Box<dyn erased_serde::Serialize>>, ()> {
     if let Some(attack_guard) = attacks.get(&id) {
         let attack = attack_guard.lock().await;
-        (StatusCode::OK, Json(attack.get_logs())).into_response()
+        Ok(attack.get_logs())
     } else {
-        StatusCode::BAD_REQUEST.into_response()
+        Err(())
     }
 }

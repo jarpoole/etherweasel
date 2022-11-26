@@ -7,6 +7,7 @@ use erased_serde::Serialize as ErasedSerialize;
 use nom::IResult;
 use pcap::Capture;
 //use pktparse::{ethernet, ip, ipv4, udp};
+use async_trait::async_trait;
 use serde::Serialize;
 use tokio::task;
 use tokio::task::JoinHandle;
@@ -24,6 +25,7 @@ struct SniffedPacket {
     foo: u32,
 }
 
+#[async_trait]
 impl Attack for Sniff {
     fn get_logs(&self) -> Vec<Box<dyn ErasedSerialize>> {
         vec![Box::new(SniffedPacket { foo: 0 })]
@@ -71,11 +73,14 @@ impl Attack for Sniff {
         ()
         */
     }
-    fn stop(&mut self) {
+    fn stop(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        /*
         for task in self.tasks.iter() {
             task.abort();
         }
         self.tasks.clear();
+        */
+        Ok(())
     }
 }
 
