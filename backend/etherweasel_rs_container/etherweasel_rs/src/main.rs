@@ -1,6 +1,7 @@
 mod attack;
 mod driver;
 
+use addr::parse_dns_name;
 use attack::{attack::Attack, sniff::Sniff};
 use axum::{
     extract::Path,
@@ -20,11 +21,10 @@ use driver::{
 use futures::stream::TryStreamExt;
 use libc;
 use rtnetlink::{new_connection, Error};
-use serde::{Deserialize, Serialize};
-use std::net::SocketAddr;
+use serde::{de::Error as DeError, Deserialize, Deserializer, Serialize};
+use std::collections::HashMap;
+use std::net::{Ipv4Addr, SocketAddr};
 use std::sync::Arc;
-use std::thread;
-use std::{collections::HashMap, str::FromStr};
 use sysinfo::{CpuExt, CpuRefreshKind, NetworkData, NetworkExt, RefreshKind, System, SystemExt};
 use tokio::sync::Mutex;
 use tower_http::cors::CorsLayer;
@@ -147,14 +147,12 @@ async fn main() {
     )));
 
     // Configure interfaces
-    /*
     set_promiscuous(eth_interfaces.0.as_str())
         .await
         .expect("failed to set promiscuous mode");
     set_promiscuous(eth_interfaces.1.as_str())
         .await
         .expect("failed to set promiscuous mode");
-        */
 
     // Create a map to store the state of the backend dns attacks
     let attacks: Attacks = Arc::new(DashMap::new());
@@ -420,9 +418,23 @@ async fn is_up(interface: &str) -> Result<bool, Error> {
 
 #[derive(Deserialize, Debug)]
 struct DnsAttackConfig {
-    domain: String,
-    replacement: String,
+    #[serde(deserialize_with = "validate_fqdn")]
+    fqdn: String,
+    ip: Ipv4Addr,
 }
+
+fn validate_fqdn<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let string: String = Deserialize::deserialize(deserializer)?;
+    info!("here");
+    match parse_dns_name(&string) {
+        Ok(addr) => Ok(addr.as_str().to_owned()),
+        Err(_) => Err(DeError::custom("Invalid FQDN")),
+    }
+}
+
 #[derive(Deserialize, Debug)]
 struct SniffAttackConfig {}
 
@@ -431,7 +443,7 @@ struct SniffAttackConfig {}
 enum CreateAttack {
     //Dns { config: DnsAttackConfig },
     Sniff { config: SniffAttackConfig },
-    Dns { config: SniffAttackConfig },
+    Dns { config: DnsAttackConfig },
 }
 
 #[derive(Serialize, Debug)]
@@ -472,6 +484,8 @@ fn create_attack(
             Box::new(Dns {
                 interface1_name: interfaces.0,
                 interface2_name: interfaces.1,
+                domain_name: config.fqdn.to_string(),
+                ip_address: config.ip,
                 ..Default::default()
             })
         }

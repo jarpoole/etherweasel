@@ -26,7 +26,7 @@ for i in "$@"; do
 done
 
 # Spin up backend (Hosted in port 3000)
-sudo ../backend/testharness.sh dns
+# sudo ../backend/testharness.sh dns
 
 # Stop if needed; runs headlessly and therefore not terminated after use
 if docker ps | grep -q -w frontend_prod_instance; then
