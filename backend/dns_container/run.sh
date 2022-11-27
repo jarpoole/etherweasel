@@ -1,6 +1,7 @@
 #!/bin/bash 
 
-cd $(dirname $0)
+set -e
+cd "$(dirname "$0")"
 
 # Define colors used for console output
 GREEN='\033[0;32m'  # Define succesful green color
