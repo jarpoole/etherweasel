@@ -94,8 +94,8 @@ elif [[ $TESTMODE = "iperf" ]]; then
 
 elif [[ $TESTMODE = "dns" ]]; then
     # Build and run
-    ./dns_container/run.sh --name=alice -- shell
-    ./etherweasel_rs_container/run.sh docker -- --mode=active --interfaces=ethmitmA,ethmitmB -vv
+    ./dns_container/run.sh --name=alice -- dig
+    ./etherweasel_rs_container/run.sh docker -- --mode=active --interfaces=ethmitmA,ethmitmB -v
     ./dns_container/run.sh --name=bob -- bind
     # Setup networking
     ./utils/network.sh \
