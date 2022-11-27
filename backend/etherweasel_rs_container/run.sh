@@ -26,6 +26,7 @@ fi
 
 # Parse arguments
 INTERACTIVE=false
+INSTALL_DEPS=false
 TRACE=0
 CPU_LIMIT=2
 MEMORY_LIMIT=1g
@@ -44,6 +45,8 @@ while [[ -n $1 ]]; do
         --password=* ) PASSWORD="${1#*=}"; shift
         ;;
         --host=* ) HOST="${1#*=}"; shift
+        ;;
+        --install-deps ) INSTALL_DEPS=true; shift
         ;;
         -- | * ) shift; break
         ;;
@@ -102,7 +105,9 @@ if [[ $TARGET = "raspi" ]]; then
   # Transfer the binary
   sshpass -p "$PASSWORD" rsync ./etherweasel_rs/target/$RASPI_TARGET/release/etherweasel_rs "$HOST":~/etherweasel_rs
   # Install dependencies and run the binary
-  sshpass -p "$PASSWORD" ssh -t "$HOST" "sudo apt install libpcap-dev"
+  if [[ $INSTALL_DEPS = true ]]; then
+    sshpass -p "$PASSWORD" ssh -t "$HOST" "sudo apt install libpcap-dev -y"
+  fi
   sshpass -p "$PASSWORD" ssh -t "$HOST" "sudo setcap cap_net_raw,cap_net_admin=eip ~/etherweasel_rs"
-  sshpass -p "$PASSWORD" ssh -t "$HOST" RUST_BACKTRACE=1 ~/etherweasel_rs --driver=hardware --interfaces=eth1,eth2 -vv "$@"
+  sshpass -p "$PASSWORD" ssh -t "$HOST" RUST_BACKTRACE="$TRACE" ~/etherweasel_rs --driver=hardware --interfaces=eth1,eth2 "$@"
 fi
