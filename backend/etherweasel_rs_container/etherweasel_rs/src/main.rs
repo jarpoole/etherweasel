@@ -35,6 +35,15 @@ use crate::attack::dns::Dns;
 
 const SPI_INTERFACE: &str = "/dev/spidev0.0";
 
+// Docker mock driver devices
+const DOCKER_ETHERNET_A: &str = "ethmitmA";
+const DOCKER_ETHERNET_B: &str = "ethmitmB";
+const DOCKER_INTERFACE_A: &str = "tapA";
+const DOCKER_INTERFACE_B: &str = "tapB";
+const DOCKER_BRIDGE_A: &str = "brA";
+const DOCKER_BRIDGE_B: &str = "brB";
+const DOCKER_BRIDGE_AB: &str = "brAB";
+
 // Notice we listen on all interfaces here (0.0.0.0) instead
 // of the standard localhost (127.0.0.1) because we would like
 // the server to be accessible from the outside network
@@ -93,13 +102,13 @@ async fn main() {
     let driver_guard: DriverGuard = Arc::new(Mutex::new(match args.driver {
         Driver::MOCK => Box::new(MockDriver::new()),
         Driver::DOCKER => Box::new(DockerDriver::new(DockerDriverConfig {
-            ethernet_a: "ethmitmA",
-            ethernet_b: "ethmitmB",
-            interface_a: "tapA",
-            interface_b: "tapB",
-            bridge_a: "brA",
-            bridge_b: "brB",
-            bridge_ab: "brAB",
+            ethernet_a: DOCKER_ETHERNET_A,
+            ethernet_b: DOCKER_ETHERNET_B,
+            interface_a: DOCKER_INTERFACE_A,
+            interface_b: DOCKER_INTERFACE_B,
+            bridge_a: DOCKER_BRIDGE_A,
+            bridge_b: DOCKER_BRIDGE_B,
+            bridge_ab: DOCKER_BRIDGE_AB,
         })),
         Driver::HARDWARE => Box::new(HardwareDriver::new(SPI_INTERFACE)),
     }));
@@ -108,9 +117,8 @@ async fn main() {
         Mode::ACTIVE => DriverMode::ACTIVE,
     };
     let verbosity = match args.verbose {
-        0 => Level::WARN,
-        1 => Level::INFO,
-        2 => Level::DEBUG,
+        0 => Level::INFO,
+        1 => Level::DEBUG,
         _ => Level::TRACE,
     };
     let eth_interfaces = EthInterfaces(
@@ -120,6 +128,7 @@ async fn main() {
 
     // Configure logging
     tracing_subscriber::fmt().with_max_level(verbosity).init();
+
     // Log the entire configuration
     debug!("mode: {:?}", args.mode);
     debug!("driver: {:?}", args.driver);
@@ -133,9 +142,9 @@ async fn main() {
     info!("etherweasel_rs running...");
 
     // Configure the driver
-    set_mode(driver_guard.clone(), driver_mode)
-        .await
-        .expect("Failed to set driver state");
+    if set_mode(driver_guard.clone(), driver_mode).await.is_err() {
+        error!("Failed to change driver mode");
+    }
 
     // Configure system monitoring
     let sys_info_guard = Arc::new(Mutex::new(System::new_with_specifics(
@@ -156,26 +165,8 @@ async fn main() {
 
     // Create a map to store the state of the backend dns attacks
     let attacks: Attacks = Arc::new(DashMap::new());
-    /*
-    attacks.insert(
-        Uuid::from_str("a428e5e2-a7b3-4c6d-adef-bab09c8307d5").unwrap(),
-        Mutex::new(Box::new(Sniff { test: 0 })),
-    );
-    */
 
-    //
-    for device in pcap::Device::list().expect("device lookup failed") {
-        println!("Found device! {:?}", device);
-    }
-
-    /*
-    let iface = eth_interfaces.clone();
-    thread::spawn(move || {
-        dns_sniff::sniff(iface.0.as_str());
-    });
-    */
-
-    // build our application with a route
+    // Configure API
     let app = Router::new()
         .route("/ping", get(ping))
         .route("/mode", get(get_mode_handler).post(set_mode_handler))
@@ -194,13 +185,12 @@ async fn main() {
         .layer(Extension(eth_interfaces))
         .layer(Extension(attacks))
         .layer(Extension(sys_info_guard));
-
     let addr = SocketAddr::from((API_ADDRESS, API_PORT));
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
         .unwrap();
-    info!("HTTP server listening on {}", addr);
+    info!("HTTP API available on {}", addr);
 }
 
 async fn ping() -> impl IntoResponse {
@@ -421,6 +411,7 @@ struct DnsAttackConfig {
     #[serde(deserialize_with = "validate_fqdn")]
     fqdn: String,
     ip: Ipv4Addr,
+    logging: bool,
 }
 
 fn validate_fqdn<'de, D>(deserializer: D) -> Result<String, D::Error>
@@ -428,7 +419,6 @@ where
     D: Deserializer<'de>,
 {
     let string: String = Deserialize::deserialize(deserializer)?;
-    info!("here");
     match parse_dns_name(&string) {
         Ok(addr) => Ok(addr.as_str().to_owned()),
         Err(_) => Err(DeError::custom("Invalid FQDN")),
@@ -467,28 +457,26 @@ fn create_attack(
     attacks: Attacks,
     interfaces: EthInterfaces,
 ) -> Result<Uuid, ()> {
-    debug!("Attempting to create new attack {:?}", new_attack);
+    debug!(
+        "Attempting to create new attack with config {:?}",
+        new_attack
+    );
     let uuid = Uuid::new_v4();
     let mut attack: Box<dyn Attack + Send + Sync> = match new_attack {
-        CreateAttack::Sniff { config } => {
-            info!("creating sniff attack");
-            Box::new(Sniff {
-                interface1: interfaces.0,
-                interface2: interfaces.1,
-                concurrency: 2,
-                tasks: vec![],
-            })
-        }
-        CreateAttack::Dns { config } => {
-            info!("creating dns attack");
-            Box::new(Dns {
-                interface1_name: interfaces.0,
-                interface2_name: interfaces.1,
-                domain_name: config.fqdn.to_string(),
-                ip_address: config.ip,
-                ..Default::default()
-            })
-        }
+        CreateAttack::Sniff { config } => Box::new(Sniff {
+            interface1: interfaces.0,
+            interface2: interfaces.1,
+            concurrency: 2,
+            tasks: vec![],
+        }),
+        CreateAttack::Dns { config } => Box::new(Dns {
+            interface1_name: interfaces.0,
+            interface2_name: interfaces.1,
+            domain_name: config.fqdn.to_string(),
+            ip_address: config.ip,
+            logging: config.logging,
+            ..Default::default()
+        }),
     };
     attack.start();
     attacks.insert(uuid, Mutex::new(attack));
