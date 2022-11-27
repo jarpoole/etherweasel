@@ -410,7 +410,8 @@ async fn is_up(interface: &str) -> Result<bool, Error> {
 struct DnsAttackConfig {
     #[serde(deserialize_with = "validate_fqdn")]
     fqdn: String,
-    ip: Ipv4Addr,
+    ipv4: Ipv4Addr,
+    ttl: u32,
     logging: bool,
 }
 
@@ -472,8 +473,9 @@ fn create_attack(
         CreateAttack::Dns { config } => Box::new(Dns {
             interface1_name: interfaces.0,
             interface2_name: interfaces.1,
-            domain_name: config.fqdn.to_string(),
-            ip_address: config.ip,
+            fqdn: config.fqdn.to_string(),
+            ipv4: config.ipv4,
+            ttl: config.ttl,
             logging: config.logging,
             ..Default::default()
         }),
