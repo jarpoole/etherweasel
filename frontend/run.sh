@@ -10,10 +10,15 @@ fi
 # Only argument that currently exists is -t | --test
 # No argument means development
 DEVELOPMENT=true
+BACKEND=true
 for i in "$@"; do
     case $i in
     -t | --test)
         DEVELOPMENT=false
+        shift
+        ;;
+    --no-backend)
+        BACKEND=false
         shift
         ;;
     -* | --*)
@@ -26,7 +31,9 @@ for i in "$@"; do
 done
 
 # Spin up backend (Hosted in port 3000)
-# sudo ../backend/testharness.sh dns
+if [[ $BACKEND = true ]]; then
+  sudo ../backend/testharness.sh dns
+fi
 
 # Stop if needed; runs headlessly and therefore not terminated after use
 if docker ps | grep -q -w frontend_prod_instance; then
