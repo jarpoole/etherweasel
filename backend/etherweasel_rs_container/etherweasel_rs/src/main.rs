@@ -258,7 +258,7 @@ struct PerformanceStats {
     free_memory: u64,
     total_memory: u64,
     cpu_frequency: u64,
-    cpu_usage: f32,
+    cpu_usage: Vec<f32>,
 }
 
 #[axum::debug_handler]
@@ -273,7 +273,7 @@ async fn get_performance_stats(
             free_memory: sys_info.free_memory(),
             total_memory: sys_info.total_memory(),
             cpu_frequency: sys_info.global_cpu_info().frequency() * 1000000,
-            cpu_usage: sys_info.global_cpu_info().cpu_usage(),
+            cpu_usage: sys_info.cpus().iter().map(|cpu| cpu.cpu_usage()).collect(),
         }),
     )
 }
@@ -403,7 +403,7 @@ async fn is_up(interface: &str) -> Result<bool, Error> {
         .await?
         .ok_or(Error::RequestFailed)?;
     task.abort();
-    Ok(response.header.flags & libc::IFF_UP as u32 != 0)
+    Ok(response.header.flags & libc::IFF_RUNNING as u32 != 0)
 }
 
 #[derive(Deserialize, Debug)]
