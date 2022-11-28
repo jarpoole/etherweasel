@@ -11,6 +11,7 @@ fi
 # No argument means development
 DEVELOPMENT=true
 BACKEND=true
+API_URL="http://localhost:3000/"
 for i in "$@"; do
     case $i in
     -t | --test)
@@ -19,6 +20,10 @@ for i in "$@"; do
         ;;
     --no-backend)
         BACKEND=false
+        shift
+        ;;
+    --api-url=* )
+        API_URL="${1#*=}"
         shift
         ;;
     -* | --*)
@@ -40,6 +45,9 @@ if docker ps | grep -q -w frontend_prod_instance; then
     docker stop frontend_prod_instance
     docker rm frontend_prod_instance
 fi
+
+# Generate the .env file
+echo "REACT_APP_ETHERWEASEL_ENDPOINT=${API_URL}" > "./.env"
 
 if [[ $DEVELOPMENT = true ]]; then
     # Since source file is mapped to the docker container, need the node modules installed locally as well
