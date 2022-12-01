@@ -84,10 +84,27 @@ pub struct DnsAnswerLog {
     ipv4: (Ipv4Addr, Ipv4Addr),
 }
 
+#[derive(Serialize)]
+pub struct DnsConfig {
+    fqdn: String,
+    ttl: u32,
+    ipv4: Ipv4Addr,
+}
+
 const INTERFACE_READ_TIMEOUT_MS: u64 = 1;
 
 #[async_trait]
 impl Attack for Dns {
+    fn get_config(&self) -> Box<dyn erased_serde::Serialize> {
+        Box::new(DnsConfig {
+            fqdn: self.fqdn.clone(),
+            ttl: self.ttl,
+            ipv4: self.ipv4,
+        })
+    }
+    fn get_type(&self) -> String {
+        "dns".to_owned()
+    }
     fn get_logs(&self) -> Vec<Box<dyn erased_serde::Serialize>> {
         self.logs
             .iter()

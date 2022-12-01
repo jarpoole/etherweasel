@@ -4,7 +4,7 @@ mod driver;
 use addr::parse_dns_name;
 use attack::{attack::Attack, sniff::Sniff};
 use axum::{
-    extract::Path,
+    extract::{Path, Query},
     http::StatusCode,
     response::IntoResponse,
     routing::{get, post},
@@ -485,18 +485,40 @@ fn create_attack(
     Ok(uuid)
 }
 
-#[axum::debug_handler]
-async fn get_attack_ids_handler(Extension(attacks): Extension<Attacks>) -> impl IntoResponse {
-    (StatusCode::OK, Json(get_attack_ids(attacks)))
+#[derive(Deserialize)]
+struct TypeFilter {
+    r#type: String,
 }
-fn get_attack_ids(attacks: Attacks) -> Vec<Uuid> {
+
+#[axum::debug_handler]
+async fn get_attack_ids_handler(
+    Extension(attacks): Extension<Attacks>,
+    type_filter: Query<TypeFilter>,
+) -> impl IntoResponse {
+    let attack_type = type_filter.0.r#type;
+    (StatusCode::OK, Json(get_attack_ids(attacks, attack_type)))
+}
+fn get_attack_ids(attacks: Attacks, attack_type: String) -> Vec<Uuid> {
     attacks.iter().map(|el| el.key().to_owned()).collect()
 }
 
 #[axum::debug_handler]
-async fn get_attack_handler(Path(id): Path<Uuid>) -> impl IntoResponse {
-    StatusCode::OK
+async fn get_attack_handler(
+    Extension(attacks): Extension<Attacks>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    match get_attack(attacks, id).await {
+        Some(attack) => (StatusCode::OK, Json(attack)).into_response(),
+        None => StatusCode::NOT_FOUND.into_response(),
+    }
 }
+async fn get_attack(attacks: Attacks, id: Uuid) -> Option<Box<dyn erased_serde::Serialize>> {
+    match attacks.get(&id) {
+        Some(attack) => Some(attack.value().lock().await.get_config()),
+        None => None,
+    }
+}
+
 #[axum::debug_handler]
 async fn delete_attack_handler(
     Path(id): Path<Uuid>,
@@ -510,9 +532,10 @@ async fn delete_attack_handler(
 async fn delete_attack(id: Uuid, attacks: Attacks) -> Result<(), ()> {
     if let Some((_, attack_guard)) = attacks.remove(&id) {
         let mut attack = attack_guard.lock().await;
-        attack.stop().unwrap_or(())
+        attack.stop().map_err(|_| ())
+    } else {
+        Err(())
     }
-    Err(())
 }
 
 #[axum::debug_handler]
