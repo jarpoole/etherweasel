@@ -25,8 +25,19 @@ struct SniffedPacket {
     foo: u32,
 }
 
+#[derive(Serialize)]
+struct SniffConfig {
+    foo: u32,
+}
+
 #[async_trait]
 impl Attack for Sniff {
+    fn get_config(&self) -> Box<dyn erased_serde::Serialize> {
+        Box::new(SniffConfig { foo: 0 })
+    }
+    fn get_type(&self) -> String {
+        "sniff".to_owned()
+    }
     fn get_logs(&self) -> Vec<Box<dyn ErasedSerialize>> {
         vec![Box::new(SniffedPacket { foo: 0 })]
     }
