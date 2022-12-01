@@ -1,0 +1,22 @@
+FROM node:18.9.1-buster as build
+
+WORKDIR /frontend
+
+# Install dependencies
+COPY package.json package.json
+COPY package-lock.json package-lock.json
+RUN npm ci --production
+
+COPY . .
+RUN echo "REACT_APP_ETHERWEASEL_ENDPOINT=http://192.168.1.1:3000/" > "./.env"
+RUN npm run build
+
+# NGINX Web Server
+FROM --platform=linux/arm64 nginx:1.22.1-alpine as production
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /frontend/build /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
