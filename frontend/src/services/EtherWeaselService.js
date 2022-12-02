@@ -29,7 +29,7 @@ class EtherWeaselService {
       return EtherWeaselService.deviceModes.DISCONNECTED;
     }
   }
-  // TODO: attach attack passive switching
+
   static async postDeviceStatus(body) {
     try {
       let response = await fetch(EtherWeaselService.url + "mode", {
@@ -92,6 +92,61 @@ class EtherWeaselService {
 
       let responseJson = await response.json();
       return responseJson;
+    } catch (error) {
+      return undefined;
+    }
+  }
+
+  static async getAttack(uuid) {
+    try {
+      let response = await fetch(EtherWeaselService.url + "attack/" + uuid);
+      let attackInfo = await response.json();
+      attackInfo.uuid = uuid;
+
+      return attackInfo;
+    } catch (error) {
+      return undefined;
+    }
+  }
+
+  static async deleteAttack(uuid) {
+    try {
+      let response = await fetch(EtherWeaselService.url + "attack/" + uuid, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        return true;
+      }
+      return false;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  static async getAttacks(type) {
+    try {
+      let response = await fetch(
+        EtherWeaselService.url +
+          "attacks?" +
+          new URLSearchParams({
+            type: type,
+          })
+      );
+      let attacksUuids = await response.json();
+      let attacksInfo = [];
+
+      for (const attackUuid of attacksUuids) {
+        let attackInfo = await EtherWeaselService.getAttack(attackUuid);
+        if (attackInfo) {
+          attacksInfo.push(attackInfo);
+        }
+      }
+
+      return attacksInfo;
     } catch (error) {
       return undefined;
     }

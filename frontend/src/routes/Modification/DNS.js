@@ -47,7 +47,7 @@ class DNS extends React.Component {
               }
             </Paper>
           </Grid>
-          <ModificationsTable />
+          <ModificationsTable deviceMode={this.props.deviceMode} />
           <LogTable />
         </Grid>
       </React.Fragment>

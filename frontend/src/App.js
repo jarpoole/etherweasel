@@ -57,7 +57,6 @@ class App extends React.Component {
       this.state.deviceMode === EtherWeaselService.deviceModes.ACTIVE
         ? EtherWeaselService.deviceModes.PASSIVE
         : EtherWeaselService.deviceModes.ACTIVE;
-    console.log(newMode);
     await EtherWeaselService.postDeviceStatus(
       JSON.stringify({
         mode: newMode.toLowerCase(),
