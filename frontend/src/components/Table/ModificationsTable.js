@@ -57,7 +57,7 @@ class ModificationsTable extends React.Component {
   createInputRow = () => {
     return (
       <TableRow sx={{ height: "50px" }}>
-        <TableCell className="paperTableModificationCell">
+        <TableCell className="paperTableModificationInputCell">
           {this.createInputTextField(
             cols[0].name,
             this.state.fqdnError,
@@ -65,7 +65,7 @@ class ModificationsTable extends React.Component {
               this.setState({ fqdnInput: event.target.value, fqdnError: false })
           )}
         </TableCell>
-        <TableCell className="paperTableModificationCell">
+        <TableCell className="paperTableModificationInputCell">
           {this.createInputTextField(
             cols[1].name,
             this.state.ipv4Error,
@@ -73,7 +73,7 @@ class ModificationsTable extends React.Component {
               this.setState({ ipv4Input: event.target.value, ipv4Error: false })
           )}
         </TableCell>
-        <TableCell className="paperTableModificationCell">
+        <TableCell className="paperTableModificationInputCell">
           {this.createInputTextField(
             cols[2].name,
             this.state.ttlError,
@@ -81,8 +81,8 @@ class ModificationsTable extends React.Component {
               this.setState({ ttlInput: event.target.value, ttlError: false })
           )}
         </TableCell>
-        <TableCell className="paperTableModificationCell" />
-        <TableCell className="paperTableModificationCell" align="center">
+        <TableCell className="paperTableModificationInputCell" />
+        <TableCell className="paperTableModificationInputCell" align="center">
           <IconButton onClick={() => this.handleCreateAttack()}>
             <AddCircleIcon />
           </IconButton>
@@ -238,7 +238,6 @@ class ModificationsTable extends React.Component {
           <h2 className="paperTitle">Modifications</h2>
           <TableContainer component={Paper} className="paperTable">
             <Table
-              fixedHeader
               stickyHeader
               sx={{
                 ".row": {
@@ -266,8 +265,11 @@ class ModificationsTable extends React.Component {
             >
               <TableHead>
                 <TableRow sx={{ height: "50px" }}>
-                  {cols.map((col) => (
-                    <TableCell sx={{ width: col.width, minWidth: col.width }}>
+                  {cols.map((col, index) => (
+                    <TableCell
+                      key={index}
+                      sx={{ width: col.width, minWidth: col.width }}
+                    >
                       {col.name}
                     </TableCell>
                   ))}

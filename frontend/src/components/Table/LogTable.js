@@ -9,70 +9,190 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 
+import CollapsibleRow from "./CollapsibleRow";
+
+const cols = [
+  {
+    name: "",
+    width: "40%",
+  },
+  {
+    name: "Src",
+    width: "40%",
+  },
+  {
+    name: "Dest",
+    width: "35%",
+  },
+  {
+    name: "Src",
+    width: 80,
+  },
+  {
+    name: "Dest",
+    width: 100,
+  },
+  {
+    name: "Src",
+    width: 40,
+  },
+  {
+    name: "Dest",
+    width: 40,
+  },
+  {
+    name: "QR",
+    width: 40,
+  },
+  {
+    name: "AA",
+    width: 40,
+  },
+  {
+    name: "RD",
+    width: 40,
+  },
+  {
+    name: "RA",
+    width: 40,
+  },
+];
 // Mock Data
 const rows = [
   {
-    id: 1,
-    lastName: "Snow",
-    firstName: "Jon",
-    age: 35,
-    status: "Success",
+    eth_src_addr: "aa:bb:cc:dd:ee:02",
+    eth_dest_addr: "aa:bb:cc:dd:ee:01",
+    ipv4_src_addr: "192.168.0.2",
+    ipv4_dest_addr: "192.168.0.1",
+    udp_src_port: 53,
+    udp_dest_port: 38827,
+    dns_qr: true,
+    dns_aa: true,
+    dns_rd: true,
+    dns_ra: false,
+    dns_questions: [
+      {
+        name: "sub1.example.local.",
+        type: "A",
+        class: "IN",
+      },
+    ],
+    dns_answers: [
+      {
+        type: "A",
+        fqdn: "sub1.example.local.",
+        ttl: [30, 3000],
+        ipv4: ["192.168.0.1", "192.168.0.4"],
+      },
+    ],
   },
   {
-    id: 2,
-    lastName: "Lannister",
-    firstName: "Cersei",
-    age: 42,
-    status: "Info",
+    eth_src_addr: "aa:bb:cc:dd:ee:02",
+    eth_dest_addr: "aa:bb:cc:dd:ee:01",
+    ipv4_src_addr: "192.168.0.2",
+    ipv4_dest_addr: "192.168.0.1",
+    udp_src_port: 53,
+    udp_dest_port: 54806,
+    dns_qr: true,
+    dns_aa: true,
+    dns_rd: true,
+    dns_ra: false,
+    dns_questions: [
+      {
+        name: "sub1.example.local.",
+        type: "A",
+        class: "IN",
+      },
+    ],
+    dns_answers: [
+      {
+        type: "A",
+        fqdn: "sub1.example.local.",
+        ttl: [30, 3000],
+        ipv4: ["192.168.0.1", "192.168.0.4"],
+      },
+    ],
   },
   {
-    id: 3,
-    lastName: "Lannister",
-    firstName: "Jaime",
-    age: 45,
-    status: "Info",
+    eth_src_addr: "aa:bb:cc:dd:ee:02",
+    eth_dest_addr: "aa:bb:cc:dd:ee:01",
+    ipv4_src_addr: "192.168.0.2",
+    ipv4_dest_addr: "192.168.0.1",
+    udp_src_port: 53,
+    udp_dest_port: 60616,
+    dns_qr: true,
+    dns_aa: true,
+    dns_rd: true,
+    dns_ra: false,
+    dns_questions: [
+      {
+        name: "sub1.example.local.",
+        type: "A",
+        class: "IN",
+      },
+    ],
+    dns_answers: [
+      {
+        type: "A",
+        fqdn: "sub1.example.local.",
+        ttl: [30, 3000],
+        ipv4: ["192.168.0.1", "192.168.0.4"],
+      },
+    ],
   },
   {
-    id: 4,
-    lastName: "Starker",
-    firstName: "Aryana",
-    age: 16,
-    status: "Warning",
+    eth_src_addr: "aa:bb:cc:dd:ee:02",
+    eth_dest_addr: "aa:bb:cc:dd:ee:01",
+    ipv4_src_addr: "192.168.0.2",
+    ipv4_dest_addr: "192.168.0.1",
+    udp_src_port: 53,
+    udp_dest_port: 33264,
+    dns_qr: true,
+    dns_aa: true,
+    dns_rd: true,
+    dns_ra: false,
+    dns_questions: [
+      {
+        name: "sub1.example.local.",
+        type: "A",
+        class: "IN",
+      },
+    ],
+    dns_answers: [
+      {
+        type: "A",
+        fqdn: "sub1.example.local.",
+        ttl: [30, 3000],
+        ipv4: ["192.168.0.1", "192.168.0.4"],
+      },
+    ],
   },
   {
-    id: 5,
-    lastName: "Targaryen",
-    firstName: "Daenerys",
-    age: null,
-    status: "Error",
-  },
-  {
-    id: 6,
-    lastName: "Melisandre",
-    firstName: "Melisandre",
-    age: 150,
-    status: "Warning",
-  },
-  {
-    id: 7,
-    lastName: "Clifford",
-    firstName: "Ferrara",
-    age: 44,
-    status: "Error",
-  },
-  {
-    id: 8,
-    lastName: "Frances",
-    firstName: "Rossini",
-    age: 36,
-    status: "Warning",
-  },
-  {
-    id: 9,
-    lastName: "Roxien",
-    firstName: "Harvester",
-    age: 65,
-    status: "Error",
+    eth_src_addr: "aa:bb:cc:dd:ee:02",
+    eth_dest_addr: "aa:bb:cc:dd:ee:01",
+    ipv4_src_addr: "192.168.0.2",
+    ipv4_dest_addr: "192.168.0.1",
+    udp_src_port: 53,
+    udp_dest_port: 44196,
+    dns_qr: true,
+    dns_aa: true,
+    dns_rd: true,
+    dns_ra: false,
+    dns_questions: [
+      {
+        name: "sub1.example.local.",
+        type: "A",
+        class: "IN",
+      },
+    ],
+    dns_answers: [
+      {
+        type: "A",
+        fqdn: "sub1.example.local.",
+        ttl: [30, 3000],
+        ipv4: ["192.168.0.1", "192.168.0.4"],
+      },
+    ],
   },
 ];
 
@@ -89,59 +209,36 @@ class LogTable extends React.Component {
             }}
             className="paperTable"
           >
-            <Table
-              stickyHeader
-              sx={{
-                ".logHeader": {
-                  paddingLeft: "20px",
-                },
-                ".logRowSuccess": {
-                  borderLeftColor: (theme) => theme.palette.success.light,
-                  borderLeftStyle: "solid",
-                  borderLeftWidth: "5px",
-                },
-                ".logRowWarning": {
-                  borderLeftColor: (theme) => theme.palette.warning.light,
-                  borderLeftStyle: "solid",
-                  borderLeftWidth: "5px",
-                },
-                ".logRowError": {
-                  borderLeftColor: (theme) => theme.palette.error.light,
-                  borderLeftStyle: "solid",
-                  borderLeftWidth: "5px",
-                },
-                ".logRowInfo": {
-                  borderLeftColor: (theme) => theme.palette.info.light,
-                  borderLeftStyle: "solid",
-                  borderLeftWidth: "5px",
-                },
-              }}
-              size="small"
-            >
+            <Table stickyHeader size="small">
               <TableHead sx={{ height: "50px" }}>
                 <TableRow>
-                  <TableCell className="logHeader">ID</TableCell>
-                  <TableCell>First Name</TableCell>
-                  <TableCell>Last Name</TableCell>
-                  <TableCell align="right">Age</TableCell>
-                  <TableCell>Status</TableCell>
+                  <TableCell />
+                  <TableCell colSpan={2} align="center">
+                    Ethernet Address
+                  </TableCell>
+                  <TableCell colSpan={2} align="center">
+                    IPV4 Address
+                  </TableCell>
+                  <TableCell colSpan={2} align="center">
+                    UDP Port
+                  </TableCell>
+                  <TableCell colSpan={4} align="center">
+                    Flags
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableHead sx={{ height: "50px" }}>
+                <TableRow>
+                  {cols.map((col, index) => (
+                    <TableCell key={index} className="paperTableLogsHeaderCell">
+                      {col.name}
+                    </TableCell>
+                  ))}
                 </TableRow>
               </TableHead>
               <TableBody>
-                {rows.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell
-                      component="th"
-                      scope="row"
-                      className={`logRow${row.status}`}
-                    >
-                      {row.id}
-                    </TableCell>
-                    <TableCell>{row.firstName}</TableCell>
-                    <TableCell>{row.lastName}</TableCell>
-                    <TableCell align="right">{row.age}</TableCell>
-                    <TableCell>{row.status}</TableCell>
-                  </TableRow>
+                {rows.map((row, index) => (
+                  <CollapsibleRow row={row} key={index} />
                 ))}
               </TableBody>
             </Table>

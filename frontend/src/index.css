@@ -38,6 +38,13 @@ code {
   font-size: 1.25rem;
 }
 
+.paperSubtitle {
+  margin-top: 0px;
+  margin-bottom: 5px;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
 .paperTable {
   height: 300px;
   box-shadow: none !important;
@@ -46,7 +53,16 @@ code {
   border-color: rgba(224, 224, 224, 1);
 }
 
-.paperTableModificationCell {
+.paperTableModificationInputCell {
   top: 50px !important;
   background-color: #eef2f6 !important;
+}
+
+.paperTableLogsHeaderCell {
+  top: 50px !important;
+}
+
+.paperTableLogsComponentCell {
+  padding-left: 0px !important;
+  padding-right: 0px !important;
 }
