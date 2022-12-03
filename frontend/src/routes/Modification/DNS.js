@@ -4,8 +4,10 @@ import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 import Switch from "@mui/material/Switch";
 
-import Header from "../../components/Header";
 import EtherWeaselService from "../../services/EtherWeaselService";
+import Header from "../../components/Header";
+import LogTable from "../../components/Table/LogTable";
+import ModificationsTable from "../../components/Table/ModificationsTable";
 
 class DNS extends React.Component {
   render() {
@@ -45,6 +47,8 @@ class DNS extends React.Component {
               }
             </Paper>
           </Grid>
+          <ModificationsTable deviceMode={this.props.deviceMode} />
+          <LogTable />
         </Grid>
       </React.Fragment>
     );

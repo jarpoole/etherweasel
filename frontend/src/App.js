@@ -48,16 +48,23 @@ class App extends React.Component {
 
   async componentDidMount() {
     this.setState({
-      deviceMode: await EtherWeaselService.fetchDeviceStatus(),
+      deviceMode: await EtherWeaselService.getDeviceStatus(),
     });
   }
 
-  updateDeviceMode = () => {
+  updateDeviceMode = async () => {
+    let newMode =
+      this.state.deviceMode === EtherWeaselService.deviceModes.ACTIVE
+        ? EtherWeaselService.deviceModes.PASSIVE
+        : EtherWeaselService.deviceModes.ACTIVE;
+    await EtherWeaselService.postDeviceStatus(
+      JSON.stringify({
+        mode: newMode.toLowerCase(),
+      })
+    );
+
     this.setState({
-      deviceMode:
-        this.state.deviceMode === EtherWeaselService.deviceModes.ACTIVE
-          ? EtherWeaselService.deviceModes.PASSIVE
-          : EtherWeaselService.deviceModes.ACTIVE,
+      deviceMode: await EtherWeaselService.getDeviceStatus(),
     });
   };
 

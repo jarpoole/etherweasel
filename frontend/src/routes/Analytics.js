@@ -5,7 +5,7 @@ import Grid from "@mui/material/Grid";
 import EtherWeaselService from "../services/EtherWeaselService";
 import Header from "../components/Header";
 import DeviceCardDashboard from "../components/DeviceCard/DeviceCardDashboard";
-import GraphDashboard from "../components/Graphs/GraphDashboard";
+import GraphDashboard from "../components/Graph/GraphDashboard";
 
 const interval = 1000;
 const numberOfGraphIntervals = 16;
@@ -57,7 +57,7 @@ class Analytics extends React.Component {
   }
 
   loadNetworkData = async () => {
-    let networkingData = await EtherWeaselService.fetchNetworkData();
+    let networkingData = await EtherWeaselService.getNetworkData();
 
     if (networkingData) {
       // Update device status for Alice
@@ -116,7 +116,7 @@ class Analytics extends React.Component {
   };
 
   loadDeviceInformation = async () => {
-    let deviceInformation = await EtherWeaselService.fetchDeviceInformation();
+    let deviceInformation = await EtherWeaselService.getDeviceInformation();
 
     if (deviceInformation) {
       this.setState({
@@ -126,7 +126,7 @@ class Analytics extends React.Component {
   };
 
   loadPerformanceData = async () => {
-    let performanceData = await EtherWeaselService.fetchDevicePerformance();
+    let performanceData = await EtherWeaselService.getDevicePerformance();
 
     if (performanceData) {
       // Update dataset for CPU Usage

@@ -8,7 +8,7 @@ class LineGraph extends React.Component {
   render() {
     return (
       <Paper elevation={1} className="paperPadding">
-        <h2 className="graphTitle">{this.props.title}</h2>
+        <h2 className="paperTitle">{this.props.title}</h2>
         <div className="lineGraphHeight">
           <ResponsiveLine
             data={Formatter.formatDataArray(

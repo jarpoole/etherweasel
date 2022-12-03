@@ -32,8 +32,44 @@ code {
   padding: 24px;
 }
 
-.graphTitle {
+.paperTitle {
   margin-top: 0px;
   margin-bottom: 15px;
   font-size: 1.25rem;
+}
+
+.paperSubtitle {
+  margin-top: 0px;
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.paperTable {
+  height: 300px;
+  box-shadow: none !important;
+  border-style: solid;
+  border-width: 1px;
+  border-color: rgba(224, 224, 224, 1);
+}
+
+.paperTableModificationInputCell {
+  top: 50px !important;
+  background-color: #eef2f6 !important;
+}
+
+.paperTableLogsHeaderCell {
+  top: 50px !important;
+}
+
+.paperTableLogsComponentCell {
+  padding-left: 7px !important;
+  padding-right: 0px !important;
+}
+
+.tableHeader {
+  margin-top: 0;
+  margin-bottom: 0;
+  font-weight: 600;
+  font-size: 0.875rem;
 }
