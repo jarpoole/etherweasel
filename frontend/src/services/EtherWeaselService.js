@@ -148,7 +148,7 @@ class EtherWeaselService {
 
       return attacksInfo;
     } catch (error) {
-      return undefined;
+      return [];
     }
   }
 
@@ -184,7 +184,7 @@ class EtherWeaselService {
 
       return logs;
     } catch (error) {
-      return undefined;
+      return [];
     }
   }
 }
