@@ -142,7 +142,7 @@ class LogTable extends React.Component {
                       sx={{
                         width: col.width,
                         minWidth: col.width,
-                        maxWidth: col.Width,
+                        maxWidth: col.width,
                       }}
                     >
                       <TableHeader
