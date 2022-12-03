@@ -16,19 +16,23 @@ import AddCircleIcon from "@mui/icons-material/AddCircle";
 import ReplayCircleFilledIcon from "@mui/icons-material/ReplayCircleFilled";
 
 import EtherWeaselService from "../../services/EtherWeaselService";
+import TableHeader from "../Tooltip/TableHeader";
 
 const cols = [
   {
     name: "FQDN",
     width: "40%",
+    tooltipLabel: "Fully Qualified Domain Name",
   },
   {
     name: "IPV4",
-    width: "35%",
+    width: "40%",
+    tooltipLabel: "Internet Protocol version 4",
   },
   {
     name: "TTL",
-    width: 80,
+    width: "40%",
+    tooltipLabel: "Time to Live",
   },
   {
     name: "Status",
@@ -215,7 +219,7 @@ class ModificationsTable extends React.Component {
 
     if (response) {
       let newDeletedRows = this.state.deletedRows.filter(
-        (row) => row.id !== attack.id
+        (row) => row.uuid !== attack.uuid
       );
 
       this.setState({
@@ -268,9 +272,16 @@ class ModificationsTable extends React.Component {
                   {cols.map((col, index) => (
                     <TableCell
                       key={index}
-                      sx={{ width: col.width, minWidth: col.width }}
+                      sx={{
+                        width: col.width,
+                        minWidth: col.width,
+                        maxWidth: col.width,
+                      }}
                     >
-                      {col.name}
+                      <TableHeader
+                        tooltipLabel={col.tooltipLabel}
+                        header={col.name}
+                      />
                     </TableCell>
                   ))}
                 </TableRow>

@@ -151,6 +151,42 @@ class EtherWeaselService {
       return undefined;
     }
   }
+
+  static async getLog(uuid) {
+    try {
+      let response = await fetch(EtherWeaselService.url + "logs/" + uuid);
+      let log = await response.json();
+
+      return log;
+    } catch (error) {
+      return undefined;
+    }
+  }
+
+  static async getLogs(type) {
+    try {
+      let response = await fetch(
+        EtherWeaselService.url +
+          "attacks?" +
+          new URLSearchParams({
+            type: type,
+          })
+      );
+      let attacksUuids = await response.json();
+      let logs = [];
+
+      for (const attackUuid of attacksUuids) {
+        let log = await this.getLog(attackUuid);
+        if (Array.isArray(log) && log.length) {
+          logs = logs.concat(log);
+        }
+      }
+
+      return logs;
+    } catch (error) {
+      return undefined;
+    }
+  }
 }
 
 export default EtherWeaselService;

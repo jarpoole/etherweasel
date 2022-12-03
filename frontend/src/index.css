@@ -41,8 +41,8 @@ code {
 .paperSubtitle {
   margin-top: 0px;
   margin-bottom: 5px;
-  font-size: 1rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
 .paperTable {
@@ -63,6 +63,13 @@ code {
 }
 
 .paperTableLogsComponentCell {
-  padding-left: 0px !important;
+  padding-left: 7px !important;
   padding-right: 0px !important;
+}
+
+.tableHeader {
+  margin-top: 0;
+  margin-bottom: 0;
+  font-weight: 600;
+  font-size: 0.875rem;
 }

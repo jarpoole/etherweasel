@@ -8,195 +8,94 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
+import IconButton from "@mui/material/IconButton";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
+import EtherWeaselService from "../../services/EtherWeaselService";
 import CollapsibleRow from "./CollapsibleRow";
+import TableHeader from "../Tooltip/TableHeader";
 
+const interval = 1000;
 const cols = [
   {
     name: "",
-    width: "40%",
+    width: "50",
   },
   {
     name: "Src",
-    width: "40%",
+    width: "17%",
   },
   {
     name: "Dest",
-    width: "35%",
+    width: "17%",
   },
   {
     name: "Src",
-    width: 80,
+    width: "13%",
   },
   {
     name: "Dest",
-    width: 100,
+    width: "13%",
   },
   {
     name: "Src",
-    width: 40,
+    width: "55",
   },
   {
     name: "Dest",
-    width: 40,
+    width: "55",
   },
   {
     name: "QR",
-    width: 40,
+    tooltipLabel: "Query",
   },
   {
     name: "AA",
-    width: 40,
+    tooltipLabel: "Authoritative Answer",
+    width: "55",
   },
   {
     name: "RD",
-    width: 40,
+    tooltipLabel: "Recursion Desired",
+    width: "55",
   },
   {
     name: "RA",
-    width: 40,
-  },
-];
-// Mock Data
-const rows = [
-  {
-    eth_src_addr: "aa:bb:cc:dd:ee:02",
-    eth_dest_addr: "aa:bb:cc:dd:ee:01",
-    ipv4_src_addr: "192.168.0.2",
-    ipv4_dest_addr: "192.168.0.1",
-    udp_src_port: 53,
-    udp_dest_port: 38827,
-    dns_qr: true,
-    dns_aa: true,
-    dns_rd: true,
-    dns_ra: false,
-    dns_questions: [
-      {
-        name: "sub1.example.local.",
-        type: "A",
-        class: "IN",
-      },
-    ],
-    dns_answers: [
-      {
-        type: "A",
-        fqdn: "sub1.example.local.",
-        ttl: [30, 3000],
-        ipv4: ["192.168.0.1", "192.168.0.4"],
-      },
-    ],
-  },
-  {
-    eth_src_addr: "aa:bb:cc:dd:ee:02",
-    eth_dest_addr: "aa:bb:cc:dd:ee:01",
-    ipv4_src_addr: "192.168.0.2",
-    ipv4_dest_addr: "192.168.0.1",
-    udp_src_port: 53,
-    udp_dest_port: 54806,
-    dns_qr: true,
-    dns_aa: true,
-    dns_rd: true,
-    dns_ra: false,
-    dns_questions: [
-      {
-        name: "sub1.example.local.",
-        type: "A",
-        class: "IN",
-      },
-    ],
-    dns_answers: [
-      {
-        type: "A",
-        fqdn: "sub1.example.local.",
-        ttl: [30, 3000],
-        ipv4: ["192.168.0.1", "192.168.0.4"],
-      },
-    ],
-  },
-  {
-    eth_src_addr: "aa:bb:cc:dd:ee:02",
-    eth_dest_addr: "aa:bb:cc:dd:ee:01",
-    ipv4_src_addr: "192.168.0.2",
-    ipv4_dest_addr: "192.168.0.1",
-    udp_src_port: 53,
-    udp_dest_port: 60616,
-    dns_qr: true,
-    dns_aa: true,
-    dns_rd: true,
-    dns_ra: false,
-    dns_questions: [
-      {
-        name: "sub1.example.local.",
-        type: "A",
-        class: "IN",
-      },
-    ],
-    dns_answers: [
-      {
-        type: "A",
-        fqdn: "sub1.example.local.",
-        ttl: [30, 3000],
-        ipv4: ["192.168.0.1", "192.168.0.4"],
-      },
-    ],
-  },
-  {
-    eth_src_addr: "aa:bb:cc:dd:ee:02",
-    eth_dest_addr: "aa:bb:cc:dd:ee:01",
-    ipv4_src_addr: "192.168.0.2",
-    ipv4_dest_addr: "192.168.0.1",
-    udp_src_port: 53,
-    udp_dest_port: 33264,
-    dns_qr: true,
-    dns_aa: true,
-    dns_rd: true,
-    dns_ra: false,
-    dns_questions: [
-      {
-        name: "sub1.example.local.",
-        type: "A",
-        class: "IN",
-      },
-    ],
-    dns_answers: [
-      {
-        type: "A",
-        fqdn: "sub1.example.local.",
-        ttl: [30, 3000],
-        ipv4: ["192.168.0.1", "192.168.0.4"],
-      },
-    ],
-  },
-  {
-    eth_src_addr: "aa:bb:cc:dd:ee:02",
-    eth_dest_addr: "aa:bb:cc:dd:ee:01",
-    ipv4_src_addr: "192.168.0.2",
-    ipv4_dest_addr: "192.168.0.1",
-    udp_src_port: 53,
-    udp_dest_port: 44196,
-    dns_qr: true,
-    dns_aa: true,
-    dns_rd: true,
-    dns_ra: false,
-    dns_questions: [
-      {
-        name: "sub1.example.local.",
-        type: "A",
-        class: "IN",
-      },
-    ],
-    dns_answers: [
-      {
-        type: "A",
-        fqdn: "sub1.example.local.",
-        ttl: [30, 3000],
-        ipv4: ["192.168.0.1", "192.168.0.4"],
-      },
-    ],
+    tooltipLabel: "Recursion Available",
+    width: "55",
   },
 ];
 
 class LogTable extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      logs: [],
+    };
+  }
+
+  componentDidMount() {
+    // Run it once to render everything properly
+    this.loadLogs();
+
+    // Run the calls in an interval
+    this.loadLogsIntervalID = setInterval(this.loadLogs, interval);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.loadLogsIntervalID);
+  }
+
+  loadLogs = async () => {
+    let newLogs = await EtherWeaselService.getLogs("dns");
+
+    if (newLogs) {
+      this.setState({
+        logs: newLogs,
+      });
+    }
+  };
+
   render() {
     return (
       <Grid item xs={12}>
@@ -212,34 +111,54 @@ class LogTable extends React.Component {
             <Table stickyHeader size="small">
               <TableHead sx={{ height: "50px" }}>
                 <TableRow>
-                  <TableCell />
-                  <TableCell colSpan={2} align="center">
-                    Ethernet Address
+                  <TableCell
+                    className="paperTableLogsComponentCell"
+                    align="center"
+                  >
+                    <IconButton size="small" disabled>
+                      <KeyboardArrowDownIcon sx={{ opacity: 0 }} />
+                    </IconButton>
                   </TableCell>
                   <TableCell colSpan={2} align="center">
-                    IPV4 Address
+                    <TableHeader header="Ethernet Address" />
                   </TableCell>
                   <TableCell colSpan={2} align="center">
-                    UDP Port
+                    <TableHeader header="IPV4 Address" />
+                  </TableCell>
+                  <TableCell colSpan={2} align="center">
+                    <TableHeader header="UDP Port" />
                   </TableCell>
                   <TableCell colSpan={4} align="center">
-                    Flags
+                    <TableHeader header="Flags" />
                   </TableCell>
                 </TableRow>
               </TableHead>
               <TableHead sx={{ height: "50px" }}>
                 <TableRow>
                   {cols.map((col, index) => (
-                    <TableCell key={index} className="paperTableLogsHeaderCell">
-                      {col.name}
+                    <TableCell
+                      key={index}
+                      className="paperTableLogsHeaderCell"
+                      sx={{
+                        width: col.width,
+                        minWidth: col.width,
+                        maxWidth: col.Width,
+                      }}
+                    >
+                      <TableHeader
+                        header={col.name}
+                        tooltipLabel={col.tooltipLabel}
+                      />
                     </TableCell>
                   ))}
                 </TableRow>
               </TableHead>
               <TableBody>
-                {rows.map((row, index) => (
-                  <CollapsibleRow row={row} key={index} />
-                ))}
+                {Array.isArray(this.state.logs) &&
+                  this.state.logs.length !== 0 &&
+                  this.state.logs.map((log, index) => (
+                    <CollapsibleRow row={log} key={index} />
+                  ))}
               </TableBody>
             </Table>
           </TableContainer>
