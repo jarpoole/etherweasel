@@ -63,6 +63,10 @@ EOF1
 sshpass -p "$PASSWORD" ssh -t "$HOST" sudo raspi-config nonint do_wifi_country CA
 
 # Install and configure the Wi-Fi access point service 
+# 
+# Note that sometimes the hostapd service tries to start before
+# the Wi-Fi interface is up and fails. We can use cron to restart
+# it after a few seconds
 sshpass -p "$PASSWORD" ssh -T "$HOST" << EOF1
 sudo apt install -y hostapd
 sudo systemctl stop hostapd
@@ -88,6 +92,7 @@ sudo cat << EOF2 | sudo tee /etc/default/hostapd
 DAEMON_CONF="/etc/hostapd/hostapd.conf"
 EOF2
 
+echo '@reboot sleep 30 && systemctl stop hostapd && systemctl start hostapd' | sudo crontab -
 EOF1
 
 # Install and configure a DHCP server so that clients get IP
