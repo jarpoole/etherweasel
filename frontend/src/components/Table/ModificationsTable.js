@@ -14,6 +14,10 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import Chip from "@mui/material/Chip";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import ReplayCircleFilledIcon from "@mui/icons-material/ReplayCircleFilled";
+import Tooltip from "@mui/material/Tooltip";
+
+import isFQDN from "validator/lib/isFQDN";
+import isIPRange from "validator/lib/isIPRange";
 
 import EtherWeaselService from "../../services/EtherWeaselService";
 import TableHeader from "../Tooltip/TableHeader";
@@ -70,6 +74,7 @@ class ModificationsTable extends React.Component {
                 fqdnInput: event.target.value,
                 fqdnError: false,
               }),
+            "Must be a valid FQDN",
             disabled
           )}
         </TableCell>
@@ -82,6 +87,7 @@ class ModificationsTable extends React.Component {
                 ipv4Input: event.target.value,
                 ipv4Error: false,
               }),
+            "Must be a valid IPv4 address",
             disabled
           )}
         </TableCell>
@@ -91,6 +97,7 @@ class ModificationsTable extends React.Component {
             this.state.ttlError,
             (event) =>
               this.setState({ ttlInput: event.target.value, ttlError: false }),
+            "Must be a valid u32 integer",
             disabled
           )}
         </TableCell>
@@ -107,20 +114,28 @@ class ModificationsTable extends React.Component {
     );
   };
 
-  createInputTextField = (name, error, handleChange, disabled) => (
-    <TextField
-      id="outlined-basic"
-      label={name}
-      variant="outlined"
-      error={error ? true : false}
-      size="small"
-      fullWidth
-      inputProps={{ sx: { fontSize: "0.875rem" } }}
-      InputLabelProps={{ sx: { fontSize: "0.875rem" } }}
-      sx={{ backgroundColor: "#ffffff" }}
-      onChange={handleChange}
-      disabled={disabled}
-    />
+  createInputTextField = (
+    name,
+    error,
+    handleChange,
+    tooltipLabel,
+    disabled
+  ) => (
+    <Tooltip title={error ? tooltipLabel : ""} followCursor>
+      <TextField
+        id="outlined-basic"
+        label={name}
+        variant="outlined"
+        error={error ? true : false}
+        size="small"
+        fullWidth
+        inputProps={{ sx: { fontSize: "0.875rem" } }}
+        InputLabelProps={{ sx: { fontSize: "0.875rem" } }}
+        sx={{ backgroundColor: "#ffffff" }}
+        onChange={handleChange}
+        disabled={disabled}
+      />
+    </Tooltip>
   );
 
   createOutputRow = (row, index, type, disabled) => (
@@ -164,18 +179,22 @@ class ModificationsTable extends React.Component {
   handleCreateAttack = async () => {
     let valid = true;
 
-    // From https://stackoverflow.com/questions/4460586/javascript-regular-expression-to-check-for-ip-addresses
-    if (
-      !/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
-        this.state.ipv4Input
-      )
-    ) {
+    if (!isFQDN(this.state.fqdnInput, { allow_trailing_dot: true })) {
+      valid = false;
+      this.state.fqdnError = true;
+    }
+
+    if (!isIPRange(this.state.ipv4Input, 4)) {
       valid = false;
       this.state.ipv4Error = true;
     }
 
     let ttlInputNumber = Math.floor(Number(this.state.ttlInput));
-    if (String(ttlInputNumber) !== this.state.ttlInput || ttlInputNumber <= 0) {
+    if (
+      String(ttlInputNumber) !== this.state.ttlInput ||
+      ttlInputNumber <= 0 ||
+      ttlInputNumber >= 4294967295
+    ) {
       valid = false;
       this.state.ttlError = true;
     }
