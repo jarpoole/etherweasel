@@ -58,7 +58,7 @@ class ModificationsTable extends React.Component {
     };
   }
 
-  createInputRow = () => {
+  createInputRow = (disabled) => {
     return (
       <TableRow sx={{ height: "50px" }}>
         <TableCell className="paperTableModificationInputCell">
@@ -66,7 +66,11 @@ class ModificationsTable extends React.Component {
             cols[0].name,
             this.state.fqdnError,
             (event) =>
-              this.setState({ fqdnInput: event.target.value, fqdnError: false })
+              this.setState({
+                fqdnInput: event.target.value,
+                fqdnError: false,
+              }),
+            disabled
           )}
         </TableCell>
         <TableCell className="paperTableModificationInputCell">
@@ -74,7 +78,11 @@ class ModificationsTable extends React.Component {
             cols[1].name,
             this.state.ipv4Error,
             (event) =>
-              this.setState({ ipv4Input: event.target.value, ipv4Error: false })
+              this.setState({
+                ipv4Input: event.target.value,
+                ipv4Error: false,
+              }),
+            disabled
           )}
         </TableCell>
         <TableCell className="paperTableModificationInputCell">
@@ -82,12 +90,16 @@ class ModificationsTable extends React.Component {
             cols[2].name,
             this.state.ttlError,
             (event) =>
-              this.setState({ ttlInput: event.target.value, ttlError: false })
+              this.setState({ ttlInput: event.target.value, ttlError: false }),
+            disabled
           )}
         </TableCell>
         <TableCell className="paperTableModificationInputCell" />
         <TableCell className="paperTableModificationInputCell" align="center">
-          <IconButton onClick={() => this.handleCreateAttack()}>
+          <IconButton
+            disabled={disabled}
+            onClick={() => this.handleCreateAttack()}
+          >
             <AddCircleIcon />
           </IconButton>
         </TableCell>
@@ -95,7 +107,7 @@ class ModificationsTable extends React.Component {
     );
   };
 
-  createInputTextField = (name, error, handleChange) => (
+  createInputTextField = (name, error, handleChange, disabled) => (
     <TextField
       id="outlined-basic"
       label={name}
@@ -107,10 +119,11 @@ class ModificationsTable extends React.Component {
       InputLabelProps={{ sx: { fontSize: "0.875rem" } }}
       sx={{ backgroundColor: "#ffffff" }}
       onChange={handleChange}
+      disabled={disabled}
     />
   );
 
-  createOutputRow = (row, index, type) => (
+  createOutputRow = (row, index, type, disabled) => (
     <TableRow key={index}>
       <TableCell component="th" scope="row" className={type}>
         {row.fqdn}
@@ -130,11 +143,17 @@ class ModificationsTable extends React.Component {
       </TableCell>
       <TableCell align="center">
         {type === "row" || type === "rowInfo" ? (
-          <IconButton onClick={() => this.handleDeleteAttack(row)}>
+          <IconButton
+            disabled={disabled}
+            onClick={() => this.handleDeleteAttack(row)}
+          >
             <DeleteIcon />
           </IconButton>
         ) : (
-          <IconButton onClick={() => this.handleRestartAttack(row)}>
+          <IconButton
+            disabled={disabled}
+            onClick={() => this.handleRestartAttack(row)}
+          >
             <ReplayCircleFilledIcon />
           </IconButton>
         )}
@@ -285,17 +304,32 @@ class ModificationsTable extends React.Component {
                     </TableCell>
                   ))}
                 </TableRow>
-                {this.createInputRow()}
+                {this.createInputRow(this.props.disabled)}
               </TableHead>
               <TableBody>
                 {this.state.rows.map((row, index) =>
                   this.props.deviceMode ===
                   EtherWeaselService.deviceModes.ACTIVE
-                    ? this.createOutputRow(row, index, "row")
-                    : this.createOutputRow(row, index, "rowInfo")
+                    ? this.createOutputRow(
+                        row,
+                        index,
+                        "row",
+                        this.props.disabled
+                      )
+                    : this.createOutputRow(
+                        row,
+                        index,
+                        "rowInfo",
+                        this.props.disabled
+                      )
                 )}
                 {this.state.deletedRows.map((row, index) =>
-                  this.createOutputRow(row, index, "rowError")
+                  this.createOutputRow(
+                    row,
+                    index,
+                    "rowError",
+                    this.props.disabled
+                  )
                 )}
               </TableBody>
             </Table>

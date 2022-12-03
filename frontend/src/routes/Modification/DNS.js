@@ -47,7 +47,13 @@ class DNS extends React.Component {
               }
             </Paper>
           </Grid>
-          <ModificationsTable deviceMode={this.props.deviceMode} />
+          <ModificationsTable
+            deviceMode={this.props.deviceMode}
+            disabled={
+              this.props.deviceMode ===
+              EtherWeaselService.deviceModes.DISCONNECTED
+            }
+          />
           <LogTable />
         </Grid>
       </React.Fragment>
