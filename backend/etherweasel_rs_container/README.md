@@ -42,7 +42,7 @@ add a static ip by adding the following lines to `/etc/dhcpcd.conf`
 ```bash
 interface eth0
 static ip_address=192.168.100.15/24
-static router=192.168.100.1
+static routers=192.168.100.1
 static domain_name_servers=192.168.100.1
 ```
 

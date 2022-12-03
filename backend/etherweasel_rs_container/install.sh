@@ -30,7 +30,9 @@ echo "Install..."
 sshpass -p "$PASSWORD" ssh -T "$HOST" << EOF1
 sudo cp /tmp/etherweasel_rs /usr/bin/etherweasel_rs
 
-sudo apt install libpcap-dev
+sudo raspi-config nonint do_spi 0
+
+sudo apt-get install -y libpcap-dev
 sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/etherweasel_rs
 
 sudo cat << EOF2 | sudo tee /lib/systemd/system/etherweasel_rs.service
@@ -52,4 +54,4 @@ sudo systemctl enable etherweasel_rs.service
 sudo systemctl start etherweasel_rs.service
 EOF1
 
-echo "Installed"
+echo "Installed. Reboot to apply changes..."
