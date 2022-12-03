@@ -148,7 +148,7 @@ class EtherWeaselService {
 
       return attacksInfo;
     } catch (error) {
-      return undefined;
+      return [];
     }
   }
 
@@ -174,6 +174,10 @@ class EtherWeaselService {
       );
       let attacksUuids = await response.json();
       let logs = [];
+
+      if (!Array.isArray(attacksUuids) || attacksUuids.length === 0) {
+        return undefined;
+      }
 
       for (const attackUuid of attacksUuids) {
         let log = await this.getLog(attackUuid);
