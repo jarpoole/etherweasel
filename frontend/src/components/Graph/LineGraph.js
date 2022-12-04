@@ -17,6 +17,13 @@ const legendProps = {
 };
 
 class LineGraph extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      userHovering: false,
+    };
+  }
+
   formatDataset = (dataset, interval, colorScheme) =>
     dataset.map((data, index) =>
       Formatter.formatDataElement(data, interval, colorScheme(data.id))
@@ -54,7 +61,7 @@ class LineGraph extends React.Component {
             yScale={{
               type: "linear",
               min: "0",
-              max: this.props.displayPercentage ? "100" : "auto",
+              max: this.props.max ? this.props.max : "auto",
               reverse: false,
             }}
             yFormat={(value) =>
@@ -82,6 +89,7 @@ class LineGraph extends React.Component {
               tickSize: 5,
               tickPadding: 5,
               tickRotation: 0,
+              tickValues: 5,
             }}
             enableGridX={false}
             lineWidth={2.25}
@@ -114,6 +122,14 @@ class LineGraph extends React.Component {
                           label: formattedData.id,
                           color: formattedData.color,
                         })),
+                      onMouseEnter: (event) => {
+                        console.log(event);
+                        this.setState({ userHovering: true });
+                      },
+                      onMouseLeave: (event) => {
+                        console.log(event);
+                        this.setState({ userHovering: true });
+                      },
                     },
                     {
                       ...legendProps,

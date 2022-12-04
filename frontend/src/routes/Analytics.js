@@ -5,7 +5,6 @@ import Grid from "@mui/material/Grid";
 import EtherWeaselService from "../services/EtherWeaselService";
 import Header from "../components/Header";
 import DeviceCardDashboard from "../components/DeviceCard/DeviceCardDashboard";
-import GraphDashboard from "../components/Graph/GraphDashboard";
 import LineGraph from "../components/Graph/LineGraph";
 
 const interval = 1000;
@@ -20,23 +19,14 @@ class Analytics extends React.Component {
       aliceIsConnected: EtherWeaselService.hostStatuses.ERROR,
       aliceInterfaceName: undefined,
       aliceRxData: [],
-      totalAliceRxPackets: 0,
       aliceTxData: [],
-      totalAliceTxPackets: 0,
       bobIsConnected: EtherWeaselService.hostStatuses.ERROR,
       bobInterfaceName: undefined,
       bobRxData: [],
-      totalBobRxPackets: 0,
       bobTxData: [],
-      totalBobTxPackets: 0,
       deviceName: undefined,
       cpusData: [],
-      currentCpuUsage: 0,
-      totalCpuUsage: 0,
       memoryData: [],
-      currentMemoryUsage: 0,
-      totalMemoryUsage: 0,
-      countCalls: 0,
     };
   }
 
@@ -103,15 +93,11 @@ class Analytics extends React.Component {
         aliceIsConnected: newAliceStatus,
         aliceInterfaceName: networkingData.alice.interface,
         aliceRxData: newAliceRxData,
-        totalAliceRxPackets: networkingData.alice.rxPackets,
         aliceTxData: newAliceTxData,
-        totalAliceTxPackets: networkingData.alice.txPackets,
         bobIsConnected: newBobStatus,
         bobInterfaceName: networkingData.bob.interface,
         bobRxData: newBobRxData,
-        totalBobRxPackets: networkingData.bob.rxPackets,
         bobTxData: newBobTxData,
-        totalBobTxPackets: networkingData.bob.txPackets,
       });
     } else {
       // The network call was unsuccessful
@@ -148,10 +134,7 @@ class Analytics extends React.Component {
 
       // Update dataset for Memory Usage
       // Converts Free Memory -> Memory Usage
-      let newMemoryDataPoint =
-        ((performanceData.totalMemory - performanceData.freeMemory) /
-          performanceData.totalMemory) *
-        100;
+      let newMemoryDataPoint = performanceData.freeMemory;
       let newMemoryData = this.updateData(
         this.state.memoryData,
         newMemoryDataPoint,
@@ -161,11 +144,7 @@ class Analytics extends React.Component {
       this.setState({
         cpusData: newCpusData,
         memoryData: newMemoryData,
-        //currentCpuUsage: newCpuDataPoint,
-        currentMemoryUsage: newMemoryDataPoint,
-        //totalCpuUsage: this.state.totalCpuUsage + newCpuDataPoint,
-        totalMemoryUsage: this.state.totalMemoryUsage + newMemoryDataPoint,
-        countCalls: this.state.countCalls + 1,
+        totalMemoryAvailable: performanceData.totalMemory,
       });
     }
   };
@@ -188,9 +167,6 @@ class Analytics extends React.Component {
   }
 
   render() {
-    let averageCPUUsage = this.state.totalCpuUsage / this.state.countCalls;
-    let averageMemoryUsage =
-      this.state.totalMemoryUsage / this.state.countCalls;
     return (
       <React.Fragment>
         <Header title="Analytics" description="Entity Description" />
@@ -213,6 +189,7 @@ class Analytics extends React.Component {
               itemWidth={60}
               displayPercentage
               interval={interval}
+              max={100}
               numberOfIntervals={numCPUIntervals}
             />
           </Grid>
@@ -221,8 +198,8 @@ class Analytics extends React.Component {
               title={"Memory"}
               dataset={[{ id: "Memory Usage", data: this.state.memoryData }]}
               itemWidth={120}
-              displayPercentage
               interval={interval}
+              max={this.state.totalMemoryAvailable}
               numberOfIntervals={numMemIntervals}
             />
           </Grid>

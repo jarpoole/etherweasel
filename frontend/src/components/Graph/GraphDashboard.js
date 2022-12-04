@@ -14,6 +14,7 @@ class GraphDashboard extends React.Component {
             title={this.props.lineGraphName}
             dataset={this.props.lineGraphData}
             displayPercentage={this.props.displayPercentage}
+            max={this.props.max}
             interval={this.props.interval}
             multiple={this.props.multiple}
             itemWidth={this.props.itemWidth}
