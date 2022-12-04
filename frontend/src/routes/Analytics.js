@@ -148,7 +148,10 @@ class Analytics extends React.Component {
 
       // Update dataset for Memory Usage
       // Converts Free Memory -> Memory Usage
-      let newMemoryDataPoint = performanceData.freeMemory;
+      let newMemoryDataPoint =
+        ((performanceData.totalMemory - performanceData.freeMemory) /
+          performanceData.totalMemory) *
+        100;
       let newMemoryData = this.updateData(
         this.state.memoryData,
         newMemoryDataPoint,
