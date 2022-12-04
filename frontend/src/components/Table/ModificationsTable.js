@@ -17,7 +17,7 @@ import ReplayCircleFilledIcon from "@mui/icons-material/ReplayCircleFilled";
 import Tooltip from "@mui/material/Tooltip";
 
 import isFQDN from "validator/lib/isFQDN";
-import isIPRange from "validator/lib/isIPRange";
+import isIP from "validator/lib/isIPRange";
 
 import EtherWeaselService from "../../services/EtherWeaselService";
 import TableHeader from "../Tooltip/TableHeader";
@@ -184,7 +184,7 @@ class ModificationsTable extends React.Component {
       this.state.fqdnError = true;
     }
 
-    if (!isIPRange(this.state.ipv4Input, 4)) {
+    if (!isIP(this.state.ipv4Input, 4)) {
       valid = false;
       this.state.ipv4Error = true;
     }
