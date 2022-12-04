@@ -9,15 +9,17 @@ class GraphDashboard extends React.Component {
   render() {
     return (
       <React.Fragment>
-        <Grid item md={8} lg={10}>
+        <Grid item xs={9}>
           <LineGraph
             title={this.props.lineGraphName}
-            data={this.props.lineGraphData}
+            dataset={this.props.lineGraphData}
             displayPercentage={this.props.displayPercentage}
             interval={this.props.interval}
+            multiple={this.props.multiple}
+            itemWidth={this.props.itemWidth}
           />
         </Grid>
-        <Grid item md={4} lg={2}>
+        <Grid item xs={3}>
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <PieGraph

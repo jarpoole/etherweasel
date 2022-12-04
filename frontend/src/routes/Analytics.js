@@ -6,28 +6,31 @@ import EtherWeaselService from "../services/EtherWeaselService";
 import Header from "../components/Header";
 import DeviceCardDashboard from "../components/DeviceCard/DeviceCardDashboard";
 import GraphDashboard from "../components/Graph/GraphDashboard";
+import LineGraph from "../components/Graph/LineGraph";
 
 const interval = 1000;
-const numberOfGraphIntervals = 16;
+const numCPUIntervals = 16;
+const numMemIntervals = 16;
+const numNetworkIntervals = 30;
 
 class Analytics extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       aliceIsConnected: EtherWeaselService.hostStatuses.ERROR,
-      aliceMacAddress: undefined,
+      aliceInterfaceName: undefined,
       aliceRxData: [],
       totalAliceRxPackets: 0,
       aliceTxData: [],
       totalAliceTxPackets: 0,
       bobIsConnected: EtherWeaselService.hostStatuses.ERROR,
-      bobMacAddress: undefined,
+      bobInterfaceName: undefined,
       bobRxData: [],
       totalBobRxPackets: 0,
       bobTxData: [],
       totalBobTxPackets: 0,
       deviceName: undefined,
-      cpuData: [],
+      cpusData: [],
       currentCpuUsage: 0,
       totalCpuUsage: 0,
       memoryData: [],
@@ -67,13 +70,15 @@ class Analytics extends React.Component {
       let newAliceRxDataPoint = networkingData.alice.rxBytes;
       let newAliceRxData = this.updateData(
         this.state.aliceRxData,
-        newAliceRxDataPoint
+        newAliceRxDataPoint,
+        numNetworkIntervals
       );
 
       let newAliceTxDataPoint = networkingData.alice.txBytes;
       let newAliceTxData = this.updateData(
         this.state.aliceTxData,
-        newAliceTxDataPoint
+        newAliceTxDataPoint,
+        numNetworkIntervals
       );
 
       // Update device status for Alice
@@ -83,24 +88,26 @@ class Analytics extends React.Component {
       let newBobRxDataPoint = networkingData.bob.rxBytes;
       let newBobRxData = this.updateData(
         this.state.bobRxData,
-        newBobRxDataPoint
+        newBobRxDataPoint,
+        numNetworkIntervals
       );
 
       let newBobTxDataPoint = networkingData.bob.txBytes;
       let newBobTxData = this.updateData(
         this.state.bobTxData,
-        newBobTxDataPoint
+        newBobTxDataPoint,
+        numNetworkIntervals
       );
 
       this.setState({
         aliceIsConnected: newAliceStatus,
-        aliceMacAddress: networkingData.alice.macAddress,
+        aliceInterfaceName: networkingData.alice.interface,
         aliceRxData: newAliceRxData,
         totalAliceRxPackets: networkingData.alice.rxPackets,
         aliceTxData: newAliceTxData,
         totalAliceTxPackets: networkingData.alice.txPackets,
         bobIsConnected: newBobStatus,
-        bobMacAddress: networkingData.bob.macAddress,
+        bobInterfaceName: networkingData.bob.interface,
         bobRxData: newBobRxData,
         totalBobRxPackets: networkingData.bob.rxPackets,
         bobTxData: newBobTxData,
@@ -130,38 +137,44 @@ class Analytics extends React.Component {
 
     if (performanceData) {
       // Update dataset for CPU Usage
-      let newCpuDataPoint = performanceData.cpuUsage;
-      let newCpuData = this.updateData(this.state.cpuData, newCpuDataPoint);
+      let newCpusDataPoint = performanceData.cpuUsage;
+      let newCpusData = newCpusDataPoint.map((newCpuDataPoint, i) =>
+        this.updateData(
+          this.state.cpusData[i],
+          newCpuDataPoint,
+          numCPUIntervals
+        )
+      );
 
       // Update dataset for Memory Usage
       // Converts Free Memory -> Memory Usage
-      let newMemoryDataPoint =
-        ((performanceData.totalMemory - performanceData.freeMemory) /
-          performanceData.totalMemory) *
-        100;
+      let newMemoryDataPoint = performanceData.freeMemory;
       let newMemoryData = this.updateData(
         this.state.memoryData,
-        newMemoryDataPoint
+        newMemoryDataPoint,
+        numMemIntervals
       );
 
       this.setState({
-        cpuData: newCpuData,
+        cpusData: newCpusData,
         memoryData: newMemoryData,
-        currentCpuUsage: newCpuDataPoint,
+        //currentCpuUsage: newCpuDataPoint,
         currentMemoryUsage: newMemoryDataPoint,
-        totalCpuUsage: this.state.totalCpuUsage + newCpuDataPoint,
+        //totalCpuUsage: this.state.totalCpuUsage + newCpuDataPoint,
         totalMemoryUsage: this.state.totalMemoryUsage + newMemoryDataPoint,
         countCalls: this.state.countCalls + 1,
       });
     }
   };
 
-  updateData(oldDataSet, newDataPoint) {
-    let newDataSet = oldDataSet;
-    if (newDataSet.length >= numberOfGraphIntervals) {
-      newDataSet = newDataSet.slice(0, numberOfGraphIntervals - 1);
+  updateData(oldDataSet, newDataPoint, maxIntervals) {
+    let newDataSet = oldDataSet ? oldDataSet : [];
+
+    if (newDataSet.length >= maxIntervals) {
+      newDataSet = newDataSet.slice(0, maxIntervals - 1);
     }
     newDataSet.unshift(newDataPoint.toFixed(2));
+
     return newDataSet;
   }
 
@@ -181,66 +194,49 @@ class Analytics extends React.Component {
         <Grid container spacing={2} style={{ paddingTop: 20 }}>
           <DeviceCardDashboard
             aliceIsConnected={this.state.aliceIsConnected}
-            aliceMacAddress={this.state.aliceMacAddress}
+            aliceInterfaceName={this.state.aliceInterfaceName}
             deviceMode={this.props.deviceMode}
             deviceName={this.state.deviceName}
             bobIsConnected={this.state.bobIsConnected}
-            bobMacAddress={this.state.bobMacAddress}
+            bobInterfaceName={this.state.bobInterfaceName}
           />
-          <GraphDashboard
-            lineGraphName={"CPU"}
-            lineGraphData={[{ id: "CPU Usage", data: this.state.cpuData }]}
-            topPieGraphName={"Average CPU Usage"}
-            topPieGraphData={[
-              { id: "Used", value: averageCPUUsage },
-              { id: "Free", value: 100 - averageCPUUsage },
-            ]}
-            bottomPieGraphName={"Current CPU Usage"}
-            bottomPieGraphData={[
-              { id: "Used", value: this.state.currentCpuUsage },
-              { id: "Free", value: 100 - this.state.currentCpuUsage },
-            ]}
-            displayPercentage={true}
-            interval={interval}
-          />
-          <GraphDashboard
-            lineGraphName={"Memory"}
-            lineGraphData={[
-              { id: "Memory Usage", data: this.state.memoryData },
-            ]}
-            topPieGraphName={"Average Mem Usage"}
-            topPieGraphData={[
-              { id: "Used", value: averageMemoryUsage },
-              { id: "Free", value: 100 - averageMemoryUsage },
-            ]}
-            bottomPieGraphName={"Current Mem Usage"}
-            bottomPieGraphData={[
-              { id: "Used", value: this.state.currentMemoryUsage },
-              { id: "Free", value: 100 - this.state.currentMemoryUsage },
-            ]}
-            displayPercentage={true}
-            interval={interval}
-          />
-          <GraphDashboard
-            lineGraphName={"Network"}
-            lineGraphData={[
-              { id: "Host B Receiving", data: this.state.bobRxData },
-              { id: "Host B Sending", data: this.state.bobTxData },
-              { id: "Host A Receiving", data: this.state.aliceRxData },
-              { id: "Host A Sending", data: this.state.bobTxData },
-            ]}
-            topPieGraphName={"Host A Summary"}
-            topPieGraphData={[
-              { id: "Sent", value: this.state.totalAliceTxPackets },
-              { id: "Received", value: this.state.totalAliceRxPackets },
-            ]}
-            bottomPieGraphName={"Host B Summary"}
-            bottomPieGraphData={[
-              { id: "Sent", value: this.state.totalBobTxPackets },
-              { id: "Received", value: this.state.totalBobRxPackets },
-            ]}
-            interval={interval}
-          />
+          <Grid item xs={6}>
+            <LineGraph
+              title={"CPU"}
+              dataset={this.state.cpusData.map((cpuData, index) => ({
+                id: `CPU${index}`,
+                data: cpuData,
+              }))}
+              itemWidth={60}
+              displayPercentage
+              interval={interval}
+              numberOfIntervals={numCPUIntervals}
+            />
+          </Grid>
+          <Grid item xs={6}>
+            <LineGraph
+              title={"Memory"}
+              dataset={[{ id: "Memory Usage", data: this.state.memoryData }]}
+              itemWidth={120}
+              displayPercentage
+              interval={interval}
+              numberOfIntervals={numMemIntervals}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <LineGraph
+              title={"Network"}
+              dataset={[
+                { id: "Host B Receiving", data: this.state.bobRxData },
+                { id: "Host B Sending", data: this.state.bobTxData },
+                { id: "Host A Receiving", data: this.state.aliceRxData },
+                { id: "Host A Sending", data: this.state.bobTxData },
+              ]}
+              itemWidth={120}
+              interval={interval * 2}
+              numberOfIntervals={numNetworkIntervals}
+            />
+          </Grid>
         </Grid>
       </React.Fragment>
     );

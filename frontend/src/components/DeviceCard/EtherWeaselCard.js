@@ -75,6 +75,7 @@ class EtherWeaselCard extends React.Component {
           <Table
             style={{ padding: "4px 26px 0px 26px" }}
             aria-label="simple table"
+            size="small"
           >
             <TableBody>
               <TableRow
@@ -82,7 +83,11 @@ class EtherWeaselCard extends React.Component {
                   "&:last-child td, &:last-child th": { border: 0 },
                 }}
               >
-                <TableCell component="th" scope="row">
+                <TableCell
+                  className="deviceCardCell"
+                  component="th"
+                  scope="row"
+                >
                   {"Status"}
                 </TableCell>
                 <TableCell align="right">
@@ -94,7 +99,11 @@ class EtherWeaselCard extends React.Component {
                   "&:last-child td, &:last-child th": { border: 0 },
                 }}
               >
-                <TableCell component="th" scope="row">
+                <TableCell
+                  className="deviceCardCell"
+                  component="th"
+                  scope="row"
+                >
                   {"Name"}
                 </TableCell>
                 <TableCell align="right">{this.props.name}</TableCell>

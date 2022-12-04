@@ -11,19 +11,15 @@ const units = [
 ];
 
 class Formatter {
-  static formatDataArray = (dataArray, interval) => {
-    return dataArray.map((dataElement) => ({
-      id: dataElement.id,
-      data: Formatter.formatDataArrayElement(dataElement.data, interval),
-    }));
-  };
-
-  static formatDataArrayElement = (data, interval) => {
-    return data.map((y, i) => ({
-      x: i * 1,
+  static formatDataElement = (dataElement, interval, color) => ({
+    id: dataElement.id,
+    color: color,
+    data: dataElement.data.map((y, i) => ({
+      x: i * (interval / 1000),
       y: y,
-    }));
-  };
+      color: color,
+    })),
+  });
 
   static formatBytes = (rawBytes, decimals = 0) => {
     // Solution from https://stackoverflow.com/questions/15900485/correct-way-to-convert-size-in-bytes-to-kb-mb-gb-in-javascript

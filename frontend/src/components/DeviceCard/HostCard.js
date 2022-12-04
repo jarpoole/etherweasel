@@ -75,6 +75,7 @@ class HostCard extends React.Component {
           <Table
             style={{ padding: "4px 26px 0px 26px" }}
             aria-label="simple table"
+            size="small"
           >
             <TableBody>
               <TableRow
@@ -82,7 +83,11 @@ class HostCard extends React.Component {
                   "&:last-child td, &:last-child th": { border: 0 },
                 }}
               >
-                <TableCell component="th" scope="row">
+                <TableCell
+                  className="deviceCardCell"
+                  component="th"
+                  scope="row"
+                >
                   {"Status"}
                 </TableCell>
                 <TableCell align="right">
@@ -94,10 +99,14 @@ class HostCard extends React.Component {
                   "&:last-child td, &:last-child th": { border: 0 },
                 }}
               >
-                <TableCell component="th" scope="row">
-                  {"MAC"}
+                <TableCell
+                  className="deviceCardCell"
+                  component="th"
+                  scope="row"
+                >
+                  {"Interface Name"}
                 </TableCell>
-                <TableCell align="right">{this.props.macAddress}</TableCell>
+                <TableCell align="right">{this.props.interfaceName}</TableCell>
               </TableRow>
             </TableBody>
           </Table>

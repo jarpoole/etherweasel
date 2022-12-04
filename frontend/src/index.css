@@ -20,12 +20,24 @@ code {
   margin: 0px 0px 16px;
 }
 
+.lineGraphTitle {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  font-size: 1.25rem;
+}
+
+.pieGraphTitle {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  font-size: 1.25rem;
+}
+
 .lineGraphHeight {
-  height: 400px;
+  height: 250px;
 }
 
 .pieGraphHeight {
-  height: 161px;
+  height: 93px;
 }
 
 .paperPadding {
@@ -43,6 +55,10 @@ code {
   margin-bottom: 5px;
   font-size: 0.9rem;
   font-weight: 600;
+}
+
+.deviceCardCell {
+  height: 40px;
 }
 
 .paperTable {
