@@ -17,7 +17,7 @@ import ReplayCircleFilledIcon from "@mui/icons-material/ReplayCircleFilled";
 import Tooltip from "@mui/material/Tooltip";
 
 import isFQDN from "validator/lib/isFQDN";
-import isIP from "validator/lib/isIPRange";
+import isIP from "validator/lib/isIP";
 
 import EtherWeaselService from "../../services/EtherWeaselService";
 import TableHeader from "../Tooltip/TableHeader";
