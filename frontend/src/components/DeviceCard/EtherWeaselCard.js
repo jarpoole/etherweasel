@@ -7,6 +7,7 @@ import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 
 import Chip from "@mui/material/Chip";
+import Skeleton from "@mui/material/Skeleton";
 import DeveloperBoardIcon from "@mui/icons-material/DeveloperBoard";
 import ToggleOnOutlinedIcon from "@mui/icons-material/ToggleOnOutlined";
 import ToggleOffOutlinedIcon from "@mui/icons-material/ToggleOffOutlined";
@@ -65,6 +66,16 @@ class EtherWeaselCard extends React.Component {
     }
   };
 
+  generateTableCell = (body, loading) => {
+    return loading ? (
+      <TableCell align="right">
+        <Skeleton variant="rectangular" width="100%" />
+      </TableCell>
+    ) : (
+      <TableCell align="right">{body}</TableCell>
+    );
+  };
+
   render() {
     return (
       <ThemeProvider theme={theme}>
@@ -90,9 +101,10 @@ class EtherWeaselCard extends React.Component {
                 >
                   {"Status"}
                 </TableCell>
-                <TableCell align="right">
-                  {this.generateModeChip(this.props.deviceMode)}
-                </TableCell>
+                {this.generateTableCell(
+                  this.generateModeChip(this.props.deviceMode),
+                  this.props.loading
+                )}
               </TableRow>
               <TableRow
                 sx={{
@@ -106,7 +118,7 @@ class EtherWeaselCard extends React.Component {
                 >
                   {"Name"}
                 </TableCell>
-                <TableCell align="right">{this.props.name}</TableCell>
+                {this.generateTableCell(this.props.name, this.props.loading)}
               </TableRow>
             </TableBody>
           </Table>

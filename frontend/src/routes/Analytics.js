@@ -187,6 +187,7 @@ class Analytics extends React.Component {
             deviceName={this.state.deviceName}
             bobIsConnected={this.state.bobIsConnected}
             bobInterfaceName={this.state.bobInterfaceName}
+            loading={this.state.loading}
           />
           <Grid item xs={6}>
             <LineGraph
@@ -200,6 +201,7 @@ class Analytics extends React.Component {
               interval={interval}
               max={100}
               numberOfIntervals={numCPUIntervals}
+              loading={this.state.loading}
             />
           </Grid>
           <Grid item xs={6}>
@@ -210,6 +212,7 @@ class Analytics extends React.Component {
               interval={interval}
               max={this.state.totalMemoryAvailable}
               numberOfIntervals={numMemIntervals}
+              loading={this.state.loading}
             />
           </Grid>
           <Grid item xs={12}>
@@ -224,6 +227,7 @@ class Analytics extends React.Component {
               itemWidth={120}
               interval={interval * 2}
               numberOfIntervals={numNetworkIntervals}
+              loading={this.state.loading}
             />
           </Grid>
         </Grid>

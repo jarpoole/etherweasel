@@ -21,7 +21,6 @@ import isIP from "validator/lib/isIP";
 
 import EtherWeaselService from "../../services/EtherWeaselService";
 import TableHeader from "../Tooltip/TableHeader";
-import LoadingScreen from "../LoadingScreen";
 
 const cols = [
   {
@@ -60,7 +59,6 @@ class ModificationsTable extends React.Component {
       fqdnError: false,
       ipv4Error: false,
       ttlError: false,
-      loading: false,
     };
   }
 
@@ -216,10 +214,6 @@ class ModificationsTable extends React.Component {
       return;
     }
 
-    this.setState({
-      loading: true,
-    });
-
     let response = await EtherWeaselService.postAttack(
       JSON.stringify({
         type: "dns",
@@ -241,19 +235,11 @@ class ModificationsTable extends React.Component {
         fqdnError: false,
         ipv4Error: false,
         ttlError: false,
-        loading: false,
-      });
-    } else {
-      this.setState({
-        loading: false,
       });
     }
   };
 
   handleDeleteAttack = async (attack) => {
-    this.setState({
-      loading: true,
-    });
     let response = await EtherWeaselService.deleteAttack(attack.uuid);
     if (response) {
       let newDeletedRows = this.state.deletedRows;
@@ -262,19 +248,11 @@ class ModificationsTable extends React.Component {
       this.setState({
         rows: await EtherWeaselService.getAttacks("dns"),
         deletedRows: newDeletedRows,
-        loading: false,
-      });
-    } else {
-      this.setState({
-        loading: false,
       });
     }
   };
 
   handleRestartAttack = async (attack) => {
-    this.setState({
-      loading: true,
-    });
     let response = await EtherWeaselService.postAttack(
       JSON.stringify({
         type: "dns",
@@ -295,11 +273,6 @@ class ModificationsTable extends React.Component {
       this.setState({
         rows: await EtherWeaselService.getAttacks("dns"),
         deletedRows: newDeletedRows,
-        loading: false,
-      });
-    } else {
-      this.setState({
-        loading: false,
       });
     }
   };
@@ -313,10 +286,6 @@ class ModificationsTable extends React.Component {
   render() {
     return (
       <React.Fragment>
-        <LoadingScreen
-          open={this.state.loading}
-          handleLoadingClick={() => this.setState({ loading: false })}
-        />
         <Grid item xs={12}>
           <Paper elevation={1} className="paperPadding">
             <h2 className="paperTitle">Modifications</h2>
