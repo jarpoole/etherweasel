@@ -34,6 +34,9 @@ class Analytics extends React.Component {
     // Run it once to render everything properly
     this.loadNetworkData();
     this.loadDeviceInformation();
+    // Comment out to fix a bug with CPU usage data
+    // Calling too quickly gives erronous values
+    //this.loadPerformanceData();
 
     // Run the calls in an interval
     this.networkDataIntervalID = setInterval(this.loadNetworkData, interval);
@@ -168,7 +171,7 @@ class Analytics extends React.Component {
   render() {
     return (
       <React.Fragment>
-        <Header title="Analytics" description="Entity Description" />
+        <Header title="Analytics" />
         <Grid container spacing={2} style={{ paddingTop: 20 }}>
           <DeviceCardDashboard
             aliceIsConnected={this.state.aliceIsConnected}
