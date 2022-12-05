@@ -40,7 +40,11 @@ class Home extends React.Component {
         <Grid container spacing={10} alignItems="stretch">
           <Grid item xs={2}></Grid>
           <Grid item xs={8}>
-            <Paper elevation={1} className="paperPadding">
+            <Paper
+              elevation={1}
+              className="paperPadding"
+              style={{ height: 500 }}
+            >
               <StlViewer
                 orbitControls
                 url={url}
@@ -61,7 +65,7 @@ class Home extends React.Component {
                 }}
                 style={{
                   backgroundColor: "white",
-                  height: "80vh",
+                  height: "100%",
                   width: "100%",
                 }}
               />
