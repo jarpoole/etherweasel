@@ -70,6 +70,7 @@ class ModificationsTable extends React.Component {
         <TableCell className="paperTableModificationInputCell">
           {this.createInputTextField(
             cols[0].name,
+            this.state.fqdnInput,
             this.state.fqdnError,
             (event) =>
               this.setState({
@@ -83,6 +84,7 @@ class ModificationsTable extends React.Component {
         <TableCell className="paperTableModificationInputCell">
           {this.createInputTextField(
             cols[1].name,
+            this.state.ipv4Input,
             this.state.ipv4Error,
             (event) =>
               this.setState({
@@ -96,6 +98,7 @@ class ModificationsTable extends React.Component {
         <TableCell className="paperTableModificationInputCell">
           {this.createInputTextField(
             cols[2].name,
+            this.state.ttlInput,
             this.state.ttlError,
             (event) =>
               this.setState({ ttlInput: event.target.value, ttlError: false }),
@@ -118,6 +121,7 @@ class ModificationsTable extends React.Component {
 
   createInputTextField = (
     name,
+    value,
     error,
     handleChange,
     tooltipLabel,
@@ -127,6 +131,7 @@ class ModificationsTable extends React.Component {
       <TextField
         id="outlined-basic"
         label={name}
+        value={value}
         variant="outlined"
         error={error ? true : false}
         size="small"
@@ -203,6 +208,7 @@ class ModificationsTable extends React.Component {
 
     if (!valid) {
       this.setState({
+        fqdnError: this.state.fqdnError,
         ipv4Error: this.state.ipv4Error,
         ttlError: this.state.ttlError,
       });
@@ -229,8 +235,12 @@ class ModificationsTable extends React.Component {
     if (response) {
       this.setState({
         rows: await EtherWeaselService.getAttacks("dns"),
-        ipv4Error: this.state.false,
-        ttlError: this.state.false,
+        fqdnInput: "",
+        ipv4Input: "",
+        ttlInput: "",
+        fqdnError: false,
+        ipv4Error: false,
+        ttlError: false,
         loading: false,
       });
     } else {
