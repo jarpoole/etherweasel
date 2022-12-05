@@ -6,6 +6,7 @@ import EtherWeaselService from "./services/EtherWeaselService";
 import SideBar from "./components/SideBar/SideBar";
 import NavBar from "./components/AppBar";
 import Breadcrumbs from "./components/Breadcrumbs";
+import LoadingScreen from "./components/LoadingScreen";
 
 // Mock Data
 const protocols = [
@@ -43,16 +44,23 @@ class App extends React.Component {
     super(props);
     this.state = {
       deviceMode: EtherWeaselService.deviceModes.DISCONNECTED,
+      loading: true,
     };
   }
 
   async componentDidMount() {
+    let newDeviceStatus = await EtherWeaselService.getDeviceStatus();
     this.setState({
-      deviceMode: await EtherWeaselService.getDeviceStatus(),
+      deviceMode: newDeviceStatus,
+      loading: false,
     });
   }
 
   updateDeviceMode = async () => {
+    this.setState({
+      loading: true,
+    });
+
     let newMode =
       this.state.deviceMode === EtherWeaselService.deviceModes.ACTIVE
         ? EtherWeaselService.deviceModes.PASSIVE
@@ -63,8 +71,10 @@ class App extends React.Component {
       })
     );
 
+    let newDeviceStatus = await EtherWeaselService.getDeviceStatus();
     this.setState({
-      deviceMode: await EtherWeaselService.getDeviceStatus(),
+      deviceMode: newDeviceStatus,
+      loading: false,
     });
   };
 
@@ -81,6 +91,10 @@ class App extends React.Component {
 
     return (
       <ThemeProvider theme={theme}>
+        <LoadingScreen
+          open={this.state.loading}
+          handleLoadingClick={() => this.setState({ loading: false })}
+        />
         <Box sx={{ display: "flex" }}>
           <NavBar />
           <SideBar protocols={protocols} />

@@ -49,7 +49,10 @@ code {
 }
 
 .paperPadding {
-  padding: 24px;
+  padding-left: 24px;
+  padding-right: 24px;
+  padding-top: 20px;
+  padding-bottom: 20px;
 }
 
 .paperTitle {
@@ -70,7 +73,7 @@ code {
 }
 
 .paperTable {
-  height: 250px;
+  height: 260px;
   box-shadow: none !important;
   border-style: solid;
   border-width: 1px;

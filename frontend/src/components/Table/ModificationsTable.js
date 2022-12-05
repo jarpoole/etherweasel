@@ -21,6 +21,7 @@ import isIP from "validator/lib/isIP";
 
 import EtherWeaselService from "../../services/EtherWeaselService";
 import TableHeader from "../Tooltip/TableHeader";
+import LoadingScreen from "../LoadingScreen";
 
 const cols = [
   {
@@ -59,6 +60,7 @@ class ModificationsTable extends React.Component {
       fqdnError: false,
       ipv4Error: false,
       ttlError: false,
+      loading: false,
     };
   }
 
@@ -208,6 +210,10 @@ class ModificationsTable extends React.Component {
       return;
     }
 
+    this.setState({
+      loading: true,
+    });
+
     let response = await EtherWeaselService.postAttack(
       JSON.stringify({
         type: "dns",
@@ -225,11 +231,19 @@ class ModificationsTable extends React.Component {
         rows: await EtherWeaselService.getAttacks("dns"),
         ipv4Error: this.state.false,
         ttlError: this.state.false,
+        loading: false,
+      });
+    } else {
+      this.setState({
+        loading: false,
       });
     }
   };
 
   handleDeleteAttack = async (attack) => {
+    this.setState({
+      loading: true,
+    });
     let response = await EtherWeaselService.deleteAttack(attack.uuid);
     if (response) {
       let newDeletedRows = this.state.deletedRows;
@@ -238,11 +252,19 @@ class ModificationsTable extends React.Component {
       this.setState({
         rows: await EtherWeaselService.getAttacks("dns"),
         deletedRows: newDeletedRows,
+        loading: false,
+      });
+    } else {
+      this.setState({
+        loading: false,
       });
     }
   };
 
   handleRestartAttack = async (attack) => {
+    this.setState({
+      loading: true,
+    });
     let response = await EtherWeaselService.postAttack(
       JSON.stringify({
         type: "dns",
@@ -263,6 +285,11 @@ class ModificationsTable extends React.Component {
       this.setState({
         rows: await EtherWeaselService.getAttacks("dns"),
         deletedRows: newDeletedRows,
+        loading: false,
+      });
+    } else {
+      this.setState({
+        loading: false,
       });
     }
   };
@@ -275,86 +302,92 @@ class ModificationsTable extends React.Component {
 
   render() {
     return (
-      <Grid item xs={12}>
-        <Paper elevation={1} className="paperPadding">
-          <h2 className="paperTitle">Modifications</h2>
-          <TableContainer component={Paper} className="paperTable">
-            <Table
-              stickyHeader
-              sx={{
-                ".row": {
-                  borderLeftColor: (theme) => theme.palette.success.light,
-                  borderLeftStyle: "solid",
-                  borderLeftWidth: "5px",
-                },
-                ".rowWarning": {
-                  borderLeftColor: (theme) => theme.palette.warning.light,
-                  borderLeftStyle: "solid",
-                  borderLeftWidth: "5px",
-                },
-                ".rowError": {
-                  borderLeftColor: (theme) => theme.palette.error.light,
-                  borderLeftStyle: "solid",
-                  borderLeftWidth: "5px",
-                },
-                ".rowInfo": {
-                  borderLeftColor: (theme) => theme.palette.info.light,
-                  borderLeftStyle: "solid",
-                  borderLeftWidth: "5px",
-                },
-              }}
-              size="small"
-            >
-              <TableHead>
-                <TableRow sx={{ height: "50px" }}>
-                  {cols.map((col, index) => (
-                    <TableCell
-                      key={index}
-                      sx={{
-                        width: col.width,
-                        minWidth: col.width,
-                        maxWidth: col.width,
-                      }}
-                    >
-                      <TableHeader
-                        tooltipLabel={col.tooltipLabel}
-                        header={col.name}
-                      />
-                    </TableCell>
-                  ))}
-                </TableRow>
-                {this.createInputRow(this.props.disabled)}
-              </TableHead>
-              <TableBody>
-                {this.state.rows.map((row, index) =>
-                  this.props.deviceMode ===
-                  EtherWeaselService.deviceModes.ACTIVE
-                    ? this.createOutputRow(
-                        row,
-                        index,
-                        "row",
-                        this.props.disabled
-                      )
-                    : this.createOutputRow(
-                        row,
-                        index,
-                        "rowInfo",
-                        this.props.disabled
-                      )
-                )}
-                {this.state.deletedRows.map((row, index) =>
-                  this.createOutputRow(
-                    row,
-                    index,
-                    "rowError",
-                    this.props.disabled
-                  )
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
-      </Grid>
+      <React.Fragment>
+        <LoadingScreen
+          open={this.state.loading}
+          handleLoadingClick={() => this.setState({ loading: false })}
+        />
+        <Grid item xs={12}>
+          <Paper elevation={1} className="paperPadding">
+            <h2 className="paperTitle">Modifications</h2>
+            <TableContainer component={Paper} className="paperTable">
+              <Table
+                stickyHeader
+                sx={{
+                  ".row": {
+                    borderLeftColor: (theme) => theme.palette.success.light,
+                    borderLeftStyle: "solid",
+                    borderLeftWidth: "5px",
+                  },
+                  ".rowWarning": {
+                    borderLeftColor: (theme) => theme.palette.warning.light,
+                    borderLeftStyle: "solid",
+                    borderLeftWidth: "5px",
+                  },
+                  ".rowError": {
+                    borderLeftColor: (theme) => theme.palette.error.light,
+                    borderLeftStyle: "solid",
+                    borderLeftWidth: "5px",
+                  },
+                  ".rowInfo": {
+                    borderLeftColor: (theme) => theme.palette.info.light,
+                    borderLeftStyle: "solid",
+                    borderLeftWidth: "5px",
+                  },
+                }}
+                size="small"
+              >
+                <TableHead>
+                  <TableRow sx={{ height: "50px" }}>
+                    {cols.map((col, index) => (
+                      <TableCell
+                        key={index}
+                        sx={{
+                          width: col.width,
+                          minWidth: col.width,
+                          maxWidth: col.width,
+                        }}
+                      >
+                        <TableHeader
+                          tooltipLabel={col.tooltipLabel}
+                          header={col.name}
+                        />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  {this.createInputRow(this.props.disabled)}
+                </TableHead>
+                <TableBody>
+                  {this.state.rows.map((row, index) =>
+                    this.props.deviceMode ===
+                    EtherWeaselService.deviceModes.ACTIVE
+                      ? this.createOutputRow(
+                          row,
+                          index,
+                          "row",
+                          this.props.disabled
+                        )
+                      : this.createOutputRow(
+                          row,
+                          index,
+                          "rowInfo",
+                          this.props.disabled
+                        )
+                  )}
+                  {this.state.deletedRows.map((row, index) =>
+                    this.createOutputRow(
+                      row,
+                      index,
+                      "rowError",
+                      this.props.disabled
+                    )
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+        </Grid>
+      </React.Fragment>
     );
   }
 }

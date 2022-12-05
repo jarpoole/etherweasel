@@ -4,6 +4,7 @@ import Grid from "@mui/material/Grid";
 
 import EtherWeaselService from "../services/EtherWeaselService";
 import Header from "../components/Header";
+import LoadingScreen from "../components/LoadingScreen";
 import DeviceCardDashboard from "../components/DeviceCard/DeviceCardDashboard";
 import LineGraph from "../components/Graph/LineGraph";
 
@@ -27,6 +28,7 @@ class Analytics extends React.Component {
       deviceName: undefined,
       cpusData: [],
       memoryData: [],
+      loading: true,
     };
   }
 
@@ -147,6 +149,7 @@ class Analytics extends React.Component {
         cpusData: newCpusData,
         memoryData: newMemoryData,
         totalMemoryAvailable: performanceData.totalMemory,
+        loading: false,
       });
     }
   };
@@ -171,6 +174,10 @@ class Analytics extends React.Component {
   render() {
     return (
       <React.Fragment>
+        <LoadingScreen
+          open={this.state.loading}
+          handleLoadingClick={() => this.setState({ loading: false })}
+        />
         <Header title="Analytics" />
         <Grid container spacing={2} style={{ paddingTop: 20 }}>
           <DeviceCardDashboard
