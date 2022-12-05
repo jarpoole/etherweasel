@@ -7,6 +7,7 @@ import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 
 import Chip from "@mui/material/Chip";
+import Skeleton from "@mui/material/Skeleton";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import LanguageIcon from "@mui/icons-material/Language";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
@@ -65,6 +66,16 @@ class HostCard extends React.Component {
     }
   };
 
+  generateTableCell = (body, loading) => {
+    return loading ? (
+      <TableCell align="right">
+        <Skeleton variant="rectangular" width="100%" />
+      </TableCell>
+    ) : (
+      <TableCell align="right">{body}</TableCell>
+    );
+  };
+
   render() {
     return (
       <ThemeProvider theme={theme}>
@@ -90,9 +101,10 @@ class HostCard extends React.Component {
                 >
                   {"Status"}
                 </TableCell>
-                <TableCell align="right">
-                  {this.generateStatusChip(this.props.hostStatus)}
-                </TableCell>
+                {this.generateTableCell(
+                  this.generateStatusChip(this.props.hostStatus),
+                  this.props.loading
+                )}
               </TableRow>
               <TableRow
                 sx={{
@@ -106,7 +118,11 @@ class HostCard extends React.Component {
                 >
                   {"Interface Name"}
                 </TableCell>
-                <TableCell align="right">{this.props.interfaceName}</TableCell>
+
+                {this.generateTableCell(
+                  this.props.interfaceName,
+                  this.props.loading
+                )}
               </TableRow>
             </TableBody>
           </Table>

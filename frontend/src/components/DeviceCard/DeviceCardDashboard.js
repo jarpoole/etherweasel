@@ -17,6 +17,7 @@ class DeviceCardDashboard extends React.Component {
                 title={"Host A"}
                 hostStatus={this.props.aliceIsConnected}
                 interfaceName={this.props.aliceInterfaceName}
+                loading={this.props.loading}
               />
             </Grid>
             <Grid item xs={4}>
@@ -24,6 +25,7 @@ class DeviceCardDashboard extends React.Component {
                 title={"Ether-Weasel"}
                 deviceMode={this.props.deviceMode}
                 name={this.props.deviceName}
+                loading={this.props.loading}
               />
             </Grid>
             <Grid item xs={4}>
@@ -31,6 +33,7 @@ class DeviceCardDashboard extends React.Component {
                 title={"Host B"}
                 hostStatus={this.props.bobIsConnected}
                 interfaceName={this.props.bobInterfaceName}
+                loading={this.props.loading}
               />
             </Grid>
           </Grid>
