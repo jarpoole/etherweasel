@@ -16,6 +16,12 @@ code {
   margin-bottom: 0;
 }
 
+.subtitle {
+  margin-top: 0px;
+  margin-bottom: 15px;
+  font-size: 1.25rem;
+}
+
 .description {
   font-size: 1.075rem;
   line-height: 1.33333;

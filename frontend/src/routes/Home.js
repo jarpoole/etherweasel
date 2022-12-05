@@ -2,40 +2,81 @@ import React from "react";
 
 import Header from "../components/Header";
 import Typography from "@mui/material/Typography";
+import Grid from "@mui/material/Grid";
+import Paper from "@mui/material/Paper";
+import Link from "@mui/material/Link";
+import { StlViewer } from "react-stl-viewer";
+
+const url = process.env.PUBLIC_URL + "/FinalRevisionMechanical.stl";
 
 class Home extends React.Component {
   render() {
     return (
       <React.Fragment>
-        <Header title="Home" description="Home is where the heart is." />
+        <Header
+          title="Ether-Weasel"
+          description="The power to shape the world is within your grasp."
+        />
+        <h2 className="subtitle">What is Ether-Weasel?</h2>
         <Typography paragraph>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-          eiusmod tempor incididunt ut labore et dolore magna aliqua. Rhoncus
-          dolor purus non enim praesent elementum facilisis leo vel. Risus at
-          ultrices mi tempus imperdiet. Semper risus in hendrerit gravida rutrum
-          quisque non tellus. Convallis convallis tellus id interdum velit
-          laoreet id donec ultrices. Odio morbi quis commodo odio aenean sed
-          adipiscing. Amet nisl suscipit adipiscing bibendum est ultricies
-          integer quis. Cursus euismod quis viverra nibh cras. Metus vulputate
-          eu scelerisque felis imperdiet proin fermentum leo. Mauris commodo
-          quis imperdiet massa tincidunt. Cras tincidunt lobortis feugiat
-          vivamus at augue. At augue eget arcu dictum varius duis at consectetur
-          lorem. Velit sed ullamcorper morbi tincidunt. Lorem donec massa sapien
-          faucibus et molestie ac. asd
+          To understand exactly what Ether-Weasel is, let us first try to
+          understand the concept of a man-in-the-middle (MitM) attack. A MitM
+          attack involves the insertion of an entity between two hosts that
+          communicate with each other, call them Alice and Bob. This third
+          entity, the ”man-in-the-middle”, is then able to interfere with the
+          dialogue while remaining undetected. This has profound and immediate
+          security impacts, because Alice still think they are speaking to Bob,
+          and vice-versa.
         </Typography>
         <Typography paragraph>
-          Consequat mauris nunc congue nisi vitae suscipit. Fringilla est
-          ullamcorper eget nulla facilisi etiam dignissim diam. Pulvinar
-          elementum integer enim neque volutpat ac tincidunt. Ornare suspendisse
-          sed nisi lacus sed viverra tellus. Purus sit amet volutpat consequat
-          mauris. Elementum eu facilisis sed odio morbi. Euismod lacinia at quis
-          risus sed vulputate odio. Morbi tincidunt ornare massa eget egestas
-          purus viverra accumsan in. In hendrerit gravida rutrum quisque non
-          tellus orci ac. Pellentesque nec nam aliquam sem et tortor. Habitant
-          morbi tristique senectus et. Adipiscing elit duis tristique
-          sollicitudin nibh sit. Ornare aenean euismod elementum nisi quis
-          eleifend. Commodo viverra maecenas accumsan lacus vel facilisis. Nulla
-          posuere sollicitudin aliquam ultrices sagittis orci a.
+          Ether-Weasel is a full-scale practical demonstration of such exploit
+          on an Ethernet network. Various subsystems were amalgamated together
+          to demonstrate the feasibility of such an attack. By doing so, we hope
+          to raise awareness to the security concerns that can arise from
+          routing cables in very low-security areas.
+        </Typography>
+
+        <h2 className="subtitle">Explore Ether-Weasel!</h2>
+        <Grid container spacing={10} alignItems="stretch">
+          <Grid item xs={2}></Grid>
+          <Grid item xs={8}>
+            <Paper elevation={1} className="paperPadding">
+              <StlViewer
+                orbitControls
+                url={url}
+                floorProps={{
+                  gridWidth: 300,
+                }}
+                modelProps={{
+                  color: "#0288d1",
+                  positionX: 150,
+                  positionY: 150,
+                  ref: {
+                    current: "[Circular]",
+                  },
+                  rotationX: 0,
+                  rotationY: 0,
+                  rotationZ: (200 / 180) * Math.PI,
+                  scale: 1.5,
+                }}
+                style={{
+                  backgroundColor: "white",
+                  height: "80vh",
+                  width: "100%",
+                }}
+              />
+            </Paper>
+          </Grid>
+          <Grid item xs={2}></Grid>
+        </Grid>
+
+        <Typography paragraph style={{ marginTop: 16 }}>
+          Special thanks to{" "}
+          <Link href="https://github.com/CedricBohemier">Cédric Bohémier</Link>,{" "}
+          <Link href="https://github.com/jarpoole">Jared Poole</Link>,{" "}
+          <Link href="https://github.com/nreep">Nickolas Reepschlager</Link> and{" "}
+          <Link href="https://github.com/PSYmoom">Symoom Islam Saad</Link> for
+          making this project possible.
         </Typography>
       </React.Fragment>
     );
