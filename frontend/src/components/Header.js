@@ -1,11 +1,16 @@
 import React from "react";
 
 class Header extends React.Component {
+  renderDescription = (description) => {
+    if (description) {
+      return <p className="description">{this.props.description}</p>;
+    }
+  };
   render() {
     return (
       <React.Fragment>
-        <h1>{this.props.title}</h1>
-        <p className="description">{this.props.description}</p>
+        <h1 className="title">{this.props.title}</h1>
+        {this.renderDescription(this.props.description)}
       </React.Fragment>
     );
   }

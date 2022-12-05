@@ -14,11 +14,11 @@ class DNS extends React.Component {
     return (
       <React.Fragment>
         <Header
-          title="DNS"
+          title="DNS Modification"
           description="The Domain Name System (DNS) is the hierarchical and decentralized naming system used to identify computers reachable through the Internet or other Internet Protocol (IP) networks."
         />
 
-        <p>
+        <p className="paragraph">
           Ether Weasel allows users to attack perform DNS spoofing, also
           referred to as DNS cache poisoning. This attack corrupts Domain Name
           System data is introduced into the DNS resolver's cache, causing the
@@ -29,7 +29,11 @@ class DNS extends React.Component {
 
         <Grid container spacing={2} style={{ paddingTop: 20 }}>
           <Grid item xs={12}>
-            <Paper elevation={1} className="paperPadding">
+            <Paper
+              elevation={1}
+              className="paperPadding"
+              style={{ paddingTop: "10px", paddingBottom: "10px" }}
+            >
               Active Mode:
               {
                 <Switch
