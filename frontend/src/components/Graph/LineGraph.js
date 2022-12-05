@@ -122,14 +122,6 @@ class LineGraph extends React.Component {
                           label: formattedData.id,
                           color: formattedData.color,
                         })),
-                      onMouseEnter: (event) => {
-                        console.log(event);
-                        this.setState({ userHovering: true });
-                      },
-                      onMouseLeave: (event) => {
-                        console.log(event);
-                        this.setState({ userHovering: true });
-                      },
                     },
                     {
                       ...legendProps,

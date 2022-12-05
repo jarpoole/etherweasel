@@ -1,14 +1,4 @@
-const units = [
-  "B/s",
-  "KB/s",
-  "MB/s",
-  "GB/s",
-  "TB/s",
-  "PB/s",
-  "EB/s",
-  "ZB/s",
-  "YB/s",
-];
+const units = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
 
 class Formatter {
   static formatDataElement = (dataElement, interval, color) => ({

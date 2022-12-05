@@ -34,7 +34,6 @@ class Analytics extends React.Component {
     // Run it once to render everything properly
     this.loadNetworkData();
     this.loadDeviceInformation();
-    this.loadPerformanceData();
 
     // Run the calls in an interval
     this.networkDataIntervalID = setInterval(this.loadNetworkData, interval);
