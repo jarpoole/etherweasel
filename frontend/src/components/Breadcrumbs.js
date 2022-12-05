@@ -14,13 +14,17 @@ function Breadcrumbs(props) {
   return (
     <Paper elevation={1} sx={{ flexGrow: 1, p: 1 }}>
       <MatBreadcrumbs aria-label="breadcrumb">
-        <LinkRouter
-          underline="hover"
-          color={pathnames?.length ? "inherit" : "text.primary"}
-          to="/"
-        >
-          Home
-        </LinkRouter>
+        {props.unreachablePages.includes("/") ? (
+          <Typography color={"inherit"}>Home</Typography>
+        ) : (
+          <LinkRouter
+            underline="hover"
+            color={pathnames?.length ? "inherit" : "text.primary"}
+            to="/"
+          >
+            Home
+          </LinkRouter>
+        )}
         {pathnames.map((value, index) => {
           const last = index === pathnames.length - 1;
           const to = `/${pathnames.slice(0, index + 1).join("/")}`;

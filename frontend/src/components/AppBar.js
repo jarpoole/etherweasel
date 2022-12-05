@@ -15,7 +15,7 @@ class NavBar extends React.Component {
         sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
       >
         <Toolbar disableGutters>
-          <Link to={`/`} display="flex">
+          <Link to={`/Modification/DNS`} display="flex">
             <PetsIcon
               sx={{
                 display: { xs: "none", md: "flex" },
