@@ -12,7 +12,7 @@ class PieGraph extends React.Component {
         style={{ paddingBottom: 12 }}
         elevation={1}
       >
-        <h2 className="paperTitle">{this.props.title}</h2>
+        <h2 className="pieGraphTitle">{this.props.title}</h2>
         <div className="pieGraphHeight">
           <ResponsivePie
             data={this.props.data}

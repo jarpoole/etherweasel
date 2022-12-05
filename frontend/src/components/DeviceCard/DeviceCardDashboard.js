@@ -16,7 +16,7 @@ class DeviceCardDashboard extends React.Component {
               <HostCard
                 title={"Host A"}
                 hostStatus={this.props.aliceIsConnected}
-                macAddress={this.props.aliceMacAddress}
+                interfaceName={this.props.aliceInterfaceName}
               />
             </Grid>
             <Grid item xs={4}>
@@ -30,7 +30,7 @@ class DeviceCardDashboard extends React.Component {
               <HostCard
                 title={"Host B"}
                 hostStatus={this.props.bobIsConnected}
-                macAddress={this.props.bobMacAddress}
+                interfaceName={this.props.bobInterfaceName}
               />
             </Grid>
           </Grid>

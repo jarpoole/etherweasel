@@ -1,34 +1,67 @@
 import React from "react";
 import Paper from "@mui/material/Paper";
 import { ResponsiveLine } from "@nivo/line";
+import { schemeTableau10 } from "d3-scale-chromatic";
+import { scaleOrdinal } from "d3-scale";
 
 import Formatter from "../../services/Formatter";
 
+const legendProps = {
+  anchor: "top-right",
+  direction: "row",
+  justify: false,
+  itemsSpacing: 5,
+  itemHeight: 26,
+  itemOpacity: 0.8,
+  symbolShape: "circle",
+};
+
 class LineGraph extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      userHovering: false,
+    };
+  }
+
+  formatDataset = (dataset, interval, colorScheme) =>
+    dataset.map((data, index) =>
+      Formatter.formatDataElement(data, interval, colorScheme(data.id))
+    );
+
   render() {
+    // Create color scheme
+    let colorScheme = scaleOrdinal(schemeTableau10);
+    let formattedDataset = this.formatDataset(
+      this.props.dataset,
+      this.props.interval,
+      colorScheme
+    );
+
     return (
       <Paper elevation={1} className="paperPadding">
-        <h2 className="paperTitle">{this.props.title}</h2>
+        <h2 className="lineGraphTitle">{this.props.title}</h2>
         <div className="lineGraphHeight">
           <ResponsiveLine
-            data={Formatter.formatDataArray(
-              this.props.data,
-              this.props.interval
-            )}
+            data={formattedDataset}
+            colors={(data) => data.color}
             margin={{
-              top: 30,
+              top: 50,
               right: 30,
-              bottom: 50,
+              bottom: 30,
               left: this.props.displayPercentage ? 50 : 60,
             }}
             xScale={{
               type: "linear",
               reverse: true,
+              min: "0",
+              max:
+                (this.props.numberOfIntervals * this.props.interval) / 1000 - 1,
             }}
             yScale={{
               type: "linear",
               min: "0",
-              max: this.props.displayPercentage ? "100" : "auto",
+              max: this.props.max ? this.props.max : "auto",
               reverse: false,
             }}
             yFormat={(value) =>
@@ -46,9 +79,6 @@ class LineGraph extends React.Component {
               tickPadding: 5,
               tickRotation: 0,
               tickValues: 8,
-              legend: this.props.title,
-              legendOffset: 36,
-              legendPosition: "middle",
             }}
             axisLeft={{
               format: (value) =>
@@ -59,38 +89,55 @@ class LineGraph extends React.Component {
               tickSize: 5,
               tickPadding: 5,
               tickRotation: 0,
-              legend: "",
-              legendOffset: -45,
-              legendPosition: "middle",
+              tickValues: 5,
             }}
             enableGridX={false}
-            colors={{ scheme: "pastel1" }}
-            lineWidth={3}
+            lineWidth={2.25}
             enablePoints={false}
             pointSize={10}
-            pointColor={{ theme: "background" }}
             pointBorderWidth={2}
-            pointBorderColor={{ from: "serieColor" }}
             pointLabelYOffset={-12}
             enableSlices="x"
             useMesh={true}
-            legends={[
-              {
-                anchor: "top-right",
-                direction: "row",
-                justify: false,
-                translateX: -10,
-                translateY: -30,
-                itemsSpacing: 45,
-                itemDirection: "left-to-right",
-                itemWidth: 80,
-                itemHeight: 20,
-                itemOpacity: 0.75,
-                symbolSize: 16,
-                symbolShape: "circle",
-                symbolBorderColor: "rgba(0, 0, 0, .5)",
-              },
-            ]}
+            legends={
+              Array.isArray(formattedDataset) && formattedDataset.length <= 6
+                ? [
+                    {
+                      ...legendProps,
+                      itemWidth: this.props.itemWidth,
+                      translateX: -10,
+                      translateY: -35,
+                    },
+                  ]
+                : [
+                    {
+                      ...legendProps,
+                      itemWidth: this.props.itemWidth,
+                      translateX: -10,
+                      translateY: -55,
+                      data: formattedDataset
+                        .slice(0, Math.floor(formattedDataset.length / 2))
+                        .map((formattedData) => ({
+                          id: formattedData.id,
+                          label: formattedData.id,
+                          color: formattedData.color,
+                        })),
+                    },
+                    {
+                      ...legendProps,
+                      itemWidth: this.props.itemWidth,
+                      translateX: -10,
+                      translateY: -33,
+                      data: formattedDataset
+                        .slice(Math.floor(formattedDataset.length / 2))
+                        .map((formattedData) => ({
+                          id: formattedData.id,
+                          label: formattedData.id,
+                          color: formattedData.color,
+                        })),
+                    },
+                  ]
+            }
           />
         </div>
       </Paper>
