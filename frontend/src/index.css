@@ -11,13 +11,21 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
+.title {
+  font-size: 28px;
+  margin-bottom: 0;
+}
 
 .description {
-  font-size: 1.125rem;
+  font-size: 1.075rem;
   line-height: 1.33333;
   letter-spacing: 0px;
   font-weight: 400;
-  margin: 0px 0px 16px;
+  margin: 16x 0px 16px;
+}
+
+.paragraph {
+  margin-bottom: 0;
 }
 
 .lineGraphTitle {
@@ -62,7 +70,7 @@ code {
 }
 
 .paperTable {
-  height: 300px;
+  height: 250px;
   box-shadow: none !important;
   border-style: solid;
   border-width: 1px;
