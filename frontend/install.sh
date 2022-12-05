@@ -36,10 +36,10 @@ echo "Install..."
 
 sshpass -p "$PASSWORD" ssh -T "$HOST" << EOF
 
-sudo docker ps -aq | xargs sudo docker stop | xargs sudo docker rm
+sudo docker ps -aq | xargs sudo docker update --restart no | xargs sudo docker stop | xargs sudo docker rm
 sudo docker run \
     --name etherweasel_ui_instance \
-    --restart unless-stopped \
+    --restart always \
     -p 80:80 \
     --detach \
     frontend_prod_image 

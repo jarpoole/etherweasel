@@ -19,12 +19,12 @@ class DNS extends React.Component {
         />
 
         <p className="paragraph">
-          Ether Weasel allows users to attack perform DNS spoofing, also
-          referred to as DNS cache poisoning. This attack corrupts Domain Name
-          System data is introduced into the DNS resolver's cache, causing the
-          name server to return an incorrect result record, e.g. an IP address.
-          This results in traffic being diverted to the attacker's computer (or
-          any other computer).
+          EtherWeasel allows users to perform DNS spoofing, also referred to as
+          DNS cache poisoning. This attack allows modified Domain Name System
+          data to be introduced into a DNS resolver's cache, causing the name
+          server to return an incorrect result record, e.g. an incorrect IP
+          address. This results in traffic being diverted to the attacker's
+          computer (or any other computer).
         </p>
 
         <Grid container spacing={2} style={{ paddingTop: 20 }}>
