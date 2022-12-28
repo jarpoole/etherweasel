@@ -1,1 +1,2 @@
+# EtherWeasel
 ![](docs/etherweasel.jpg)
