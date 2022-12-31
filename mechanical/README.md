@@ -8,4 +8,5 @@ Source file is `model.f3d` and was created with [Fusion 360](https://www.autodes
 
 ## Assembled
 
+![opened](./docs/opened.jpg)
 ![inside](./docs/inside.jpg)
