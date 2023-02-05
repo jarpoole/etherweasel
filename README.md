@@ -22,6 +22,7 @@ This project was inspired by the excellent work of Van Albert and Banks at DEFCO
 
 ## Software Limitations
 
+
 - No support for [DNSSEC](https://en.wikipedia.org/wiki/Domain_Name_System_Security_Extensions) (DNS Security Extensions)
 - No support for [DoH](https://en.wikipedia.org/wiki/DNS_over_HTTPS) (DNS over HTTPS)
 - No support for [DoT](https://en.wikipedia.org/wiki/DNS_over_TLS) (DNS over TLS)
